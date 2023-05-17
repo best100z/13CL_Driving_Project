@@ -18,7 +18,7 @@ class piRobot():
   def __init__(self):
     gpio.setmode(gpio.BCM)
     for i in range(28):
-      gpio.setup(i, gpio.out)
+      gpio.setup(i, gpio.OUT)
     self.pinStates = np.zeros(28)
     self.angle = 0
     self.direction = 1
@@ -268,8 +268,8 @@ class piRobot():
       event_thread.stop()
       reset()
  
-event_queue = queue.Queue()
+#event_queue = queue.Queue()
 
 myRobot = piRobot()
-
 myRobot.TurnMotor(65, "Left")
+
