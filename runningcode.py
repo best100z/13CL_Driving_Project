@@ -272,4 +272,4 @@ class piRobot():
 
 myRobot = piRobot()
 #myRobot.TurnMotor(65, "Left")
-myrobot.pinOnOff([9])
+myRobot.pinOnOff([9])
