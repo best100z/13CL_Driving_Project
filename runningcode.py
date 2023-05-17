@@ -109,7 +109,7 @@ class piRobot():
             time.sleep(0.0001)         
             actualTicks = actualTicks - 1
     for i in [9, 25, 11, 8]:
-      if self.pinStates(i) == 1:
+      if self.pinStates[i] == 1:
         self.pinOnOff([i])
     
   #Driving Code
