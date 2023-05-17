@@ -45,7 +45,7 @@ class piRobot():
     self.angle = angle
       
   def UhOh(self):   
-    for i in range(28)
+    for i in range(28):
       if self.pinStates[i] == 1:
         self.pinOnOff(i)
   
