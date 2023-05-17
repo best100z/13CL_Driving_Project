@@ -22,8 +22,8 @@ class piRobot():
     self.pinStates = np.zeros(28)
     self.angle = 0
     self.direction = 1
-    self.labjack = u3.U3()
-    self.labjack.configIO(FIOAnalog = 0)
+    #self.labjack = u3.U3()
+    #self.labjack.configIO(FIOAnalog = 0)
     self.frontvision = 0
     self.location = RobotLocation()
     
