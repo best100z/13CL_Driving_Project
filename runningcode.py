@@ -43,7 +43,8 @@ class piRobot():
   
   def update_angle(self, angle):
     self.angle = angle
-      
+  
+####What is this code doing? reset all pins?######
   def UhOh(self):   
     for i in range(28):
       if self.pinStates[i] == 1:
@@ -66,7 +67,14 @@ class piRobot():
         print("Too Many Degrees Dont Break the Car")
         self.update_angle(self.angle+angle)
         return
+   
+
+#####Here the step angle may change as we are using a different motor
     stepAngle = 360/4096*8;
+    
+   
+    
+    
     actualTicks = angle/stepAngle;
     if Direction == "Left":
         self.pinOnOff([9, 25])
@@ -113,6 +121,8 @@ class piRobot():
         self.pinOnOff([i])
     
   #Driving Code
+
+
 
   def DriveMotor(self, distance = 0, Direction = "Forward"): #360 Degrees = 22cm of movement
       angle = distance*360/22
@@ -215,8 +225,14 @@ class piRobot():
 
 
   "Pathfinding Code"
+    
+  def DriveCar(self, distance = 0):
+      
 
-
+ 
+    
+    
+    
   def getAIN(self, n=0):
       ain0bits, = self.labjack.getFeedback(u3.AIN(n));
       ainValue = self.labjack.binaryToCalibratedAnalogVoltage(ain0bits, isLowVoltage=False, channelNumber = 0);
