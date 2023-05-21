@@ -177,7 +177,8 @@ class piRobot():
           self.TurnMotor(abs(Steering_Angle.angle), "Right")
       selt.DriveMotorCM(cm, Direction)
    
-  def irMotor(self, angle = 0, Direction = "Left"):   
+  def irMotor(self, angle = 0, Direction = "Left"):
+    stepAngle = 360/4096*8;
     if Direction == "Left":
         self.update_irangle(self.irangle-angle)  
     if Direction == "Right":
