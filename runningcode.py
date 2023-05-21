@@ -274,10 +274,18 @@ class piRobot():
   event_thread = threading.Thread(target=event_loop)
 
 
-  def VoltagetoDistance():
-      Voltage = getAINhandle1()
+  def VoltagetoDistance(self, n):
+      Voltage = self.getAIN(n)
       x = np.log((Voltage-0.46)/3.67)/(-0.068)
       return x
+  
+  def VoltageWorked(self):
+      x = self.VoltagetoDistance(1)
+      if x >= 0:
+         self.irMotor(90, "Right")
+         return
+      else:
+         return
 
   def GOGOGO():
       sensor_thread.start()
@@ -291,5 +299,7 @@ class piRobot():
 #event_queue = queue.Queue()
 
 myRobot = piRobot()
-myRobot.TurnMotor(65, "Right")
-myRobot.irMotor(70, "Right")
+myRobot.irMotor(3, "Left")
+myRobot.DriveMotor(10, "Forward")
+myRobot.VoltageWorked()
+
