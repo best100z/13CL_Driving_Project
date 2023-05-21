@@ -67,43 +67,43 @@ class piRobot():
     actualTicks = angle/stepAngle;
     if Direction == "Left":
         self.pinOnOff([9, 25])
-        time.sleep(0.0001);
+        time.sleep(0.01);
         self.pinOnOff([9, 11]);
-        time.sleep(0.0001);
+        time.sleep(0.01);
         self.pinOnOff([25, 8]);
-        time.sleep(0.0001);
+        time.sleep(0.01);
         self.pinOnOff([9, 11]);
-        time.sleep(0.0001);        
+        time.sleep(0.01);        
         actualTicks = actualTicks - 1;
         while actualTicks>0:
             self.pinOnOff([8, 25]);
-            time.sleep(0.0001);
+            time.sleep(0.01);
             self.pinOnOff([9, 11]);
-            time.sleep(0.0001);
+            time.sleep(0.01);
             self.pinOnOff([8, 25]);
-            time.sleep(0.0001);
+            time.sleep(0.01);
             self.pinOnOff([9, 11]);
-            time.sleep(0.0001);        
+            time.sleep(0.01);        
             actualTicks = actualTicks - 1;
     if Direction == "Right":
         self.pinOnOff([9, 8])
-        time.sleep(0.0001)
+        time.sleep(0.01)
         self.pinOnOff([9, 11])
-        time.sleep(0.0001)
+        time.sleep(0.01)
         self.pinOnOff([25, 8])
-        time.sleep(0.0001)
+        time.sleep(0.01)
         self.pinOnOff([9, 11])
-        time.sleep(0.0001)       
+        time.sleep(0.01)       
         actualTicks = actualTicks - 1
         while actualTicks>0:
             self.pinOnOff([25, 8])
-            time.sleep(0.0001)
+            time.sleep(0.01)
             self.pinOnOff([9, 11])
-            time.sleep(0.0001)
+            time.sleep(0.01)
             self.pinOnOff([25, 8])
-            time.sleep(0.0001)
+            time.sleep(0.01)
             self.pinOnOff([9, 11])
-            time.sleep(0.0001)         
+            time.sleep(0.01)         
             actualTicks = actualTicks - 1
     for i in [9, 25, 11, 8]:
       if self.pinStates[i] == 1:
@@ -186,43 +186,43 @@ class piRobot():
     actualTicks = angle/stepAngle;
     if Direction == "Left":
         self.pinOnOff([4, 15])
-        time.sleep(0.0001);
+        time.sleep(0.01);
         self.pinOnOff([4, 17]);
-        time.sleep(0.0001);
+        time.sleep(0.01);
         self.pinOnOff([15, 18]);
-        time.sleep(0.0001);
+        time.sleep(0.01);
         self.pinOnOff([4, 17]);
-        time.sleep(0.0001);        
+        time.sleep(0.01);        
         actualTicks = actualTicks - 1;
         while actualTicks>0:
             self.pinOnOff([15, 18]);
-            time.sleep(0.0001);
+            time.sleep(0.01);
             self.pinOnOff([4, 17]);
-            time.sleep(0.0001);
+            time.sleep(0.01);
             self.pinOnOff([15, 18]);
-            time.sleep(0.0001);
+            time.sleep(0.01);
             self.pinOnOff([4, 17]);
-            time.sleep(0.0001);        
+            time.sleep(0.01);        
             actualTicks = actualTicks - 1;
     if Direction == "Right":
         self.pinOnOff([4, 18])
-        time.sleep(0.0001)
+        time.sleep(0.01)
         self.pinOnOff([4, 17])
-        time.sleep(0.0001)
+        time.sleep(0.01)
         self.pinOnOff([15, 18])
-        time.sleep(0.0001)
+        time.sleep(0.01)
         self.pinOnOff([4, 17])
-        time.sleep(0.0001)       
+        time.sleep(0.01)       
         actualTicks = actualTicks - 1
         while actualTicks>0:
             self.pinOnOff([15, 18])
-            time.sleep(0.0001)
+            time.sleep(0.01)
             self.pinOnOff([4, 17])
-            time.sleep(0.0001)
+            time.sleep(0.01)
             self.pinOnOff([15, 18])
-            time.sleep(0.0001)
+            time.sleep(0.01)
             self.pinOnOff([4, 17])
-            time.sleep(0.0001)         
+            time.sleep(0.01)         
             actualTicks = actualTicks - 1
     for i in [4, 15, 17, 18]:
       if self.pinStates[i] == 1:
