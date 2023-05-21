@@ -37,6 +37,9 @@ class piRobot():
   
   def update_angle(self, angle):
     self.angle = angle
+      
+  def update_irangle(self, angle):
+    self.irangle = angle
   
   def UhOh(self):   
     for i in range(28):
@@ -176,19 +179,9 @@ class piRobot():
    
   def irMotor(self, angle = 0, Direction = "Left"):   
     if Direction == "Left":
-        self.update_angle(self.angle-angle)  
+        self.update_irangle(self.irangle-angle)  
     if Direction == "Right":
-        self.update_angle(self.angle+angle)  
-    if self.angle > 65:
-        self.UhOh()
-        print("Too Many Degrees Dont Break the Car")
-        self.update_angle(self.angle-angle)
-        return
-    if self.angle < -65:
-        self.UhOh()
-        print("Too Many Degrees Dont Break the Car")
-        self.update_angle(self.angle+angle)
-        return
+        self.update_irangle(self.irangle+angle)  
     actualTicks = angle/stepAngle;
     if Direction == "Left":
         self.pinOnOff([4, 15])
