@@ -237,7 +237,7 @@ class piRobot():
   "Pathfinding Code"
     
   def DriveCar(self, distance = 0):
-      
+    pass  
 
  
     
