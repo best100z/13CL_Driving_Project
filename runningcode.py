@@ -7,12 +7,6 @@ import queue
 import numpy as np
 
 #pin configuration
-
-class RobotLocation():
-    def __init__(self):
-        self.frontvision = 0
-    def update_sight(self,frontvision):
-        self.frontvision = frontvision
    
 class piRobot():
   def __init__(self):
@@ -21,12 +15,12 @@ class piRobot():
       gpio.setup(i, gpio.OUT)
     self.pinStates = np.zeros(28)
     self.angle = 0
+    self.irangle = 0
     self.direction = 1
-    #self.labjack = u3.U3()
-    #self.labjack.configIO(FIOAnalog = 0)
+    self.labjack = u3.U3()
+    self.labjack.configU3()
     self.frontvision = 0
-    self.location = RobotLocation()
-    
+
   def pinOnOff(self, numbers):
     for number in numbers:
       if self.pinStates[number]==0:
@@ -44,7 +38,6 @@ class piRobot():
   def update_angle(self, angle):
     self.angle = angle
   
-####What is this code doing? reset all pins?######
   def UhOh(self):   
     for i in range(28):
       if self.pinStates[i] == 1:
@@ -67,14 +60,7 @@ class piRobot():
         print("Too Many Degrees Dont Break the Car")
         self.update_angle(self.angle+angle)
         return
-   
-
-#####Here the step angle may change as we are using a different motor
     stepAngle = 360/4096*8;
-    
-   
-    
-    
     actualTicks = angle/stepAngle;
     if Direction == "Left":
         self.pinOnOff([9, 25])
@@ -122,55 +108,21 @@ class piRobot():
     
   #Driving Code
 
+  def setFIODrive(self, channel, state): #Labjack specific
+    self.labjack.setDOState(channel, state);
 
-
-  def DriveMotor(self, distance = 0, Direction = "Forward"): #360 Degrees = 22cm of movement
-      angle = distance*360/22
-      stepAngle = 360/4096*8;
-      actualTicks = angle/stepAngle;
-      if Direction == "Backward":
-          self.pinOnOff([19, 16])
-          time.sleep(0.0001)
-          self.pinOnOff([19, 26])
-          time.sleep(0.0001)
-          self.pinOnOff([16, 20])
-          time.sleep(0.0001)
-          self.pinOnOff([19, 26])
-          time.sleep(0.0001)         
-          actualTicks = actualTicks - 1
-          while actualTicks>0:
-              self.pinOnOff([16, 20])
-              time.sleep(0.0001)
-              self.pinOnOff([19, 26])
-              time.sleep(0.0001)
-              self.pinOnOff([16, 20])
-              time.sleep(0.0001)
-              self.pinOnOff([19, 26])
-              time.sleep(0.0001)         
-              actualTicks = actualTicks - 1
-      if Direction == "Forward":
-          self.pinOnOff([19, 20])
-          time.sleep(0.0001)
-          self.pinOnOff([19, 26])
-          time.sleep(0.0001)
-          self.pinOnOff([16, 20])
-          time.sleep(0.0001)
-          self.pinOnOff([19, 26])
-          time.sleep(0.0001)         
-          actualTicks = actualTicks - 1
-          while actualTicks>0:
-              self.pinOnOff([16, 20])
-              time.sleep(0.0001)
-              self.pinOnOff([19, 26])
-              time.sleep(0.0001)
-              self.pinOnOff([16, 20])
-              time.sleep(0.0001)
-              self.pinOnOff([19, 26])
-              time.sleep(0.0001)       
-              actualTicks = actualTicks - 1;
-      for i in [19, 16, 26, 20]:
-        if self.pinStates(i) == 1:
-          self.pinOnOff([i])
+  def DriveMotor(self, Steps = 0, Direction = "Forward"): #'drive' means this command controls the driving motor. Needs power to both DIR and STEP pin on DRV8825, will turn the motor by step, not by distance
+    if Direction == "Forward":
+        self.setFIODrive(5, 1)
+    if Direction == "Backward":
+        self.setFIODrive(5,0)
+    for i in range(Steps):
+        self.setFIODrive(4,1)
+        time.sleep(0.01)
+        self.setFIODrive(4, 0)
+        time.sleep(0.01)
+        i += 1
+    
 
   def ReverseTurn90(self, Direction= "Right"):
       if Direction == "Right":
@@ -222,7 +174,65 @@ class piRobot():
           self.TurnMotor(abs(Steering_Angle.angle), "Right")
       selt.DriveMotorCM(cm, Direction)
    
-
+  def irMotor(self, angle = 0, Direction = "Left"):   
+    if Direction == "Left":
+        self.update_angle(self.angle-angle)  
+    if Direction == "Right":
+        self.update_angle(self.angle+angle)  
+    if self.angle > 65:
+        self.UhOh()
+        print("Too Many Degrees Dont Break the Car")
+        self.update_angle(self.angle-angle)
+        return
+    if self.angle < -65:
+        self.UhOh()
+        print("Too Many Degrees Dont Break the Car")
+        self.update_angle(self.angle+angle)
+        return
+    actualTicks = angle/stepAngle;
+    if Direction == "Left":
+        self.pinOnOff([4, 15])
+        time.sleep(0.0001);
+        self.pinOnOff([4, 17]);
+        time.sleep(0.0001);
+        self.pinOnOff([15, 18]);
+        time.sleep(0.0001);
+        self.pinOnOff([4, 17]);
+        time.sleep(0.0001);        
+        actualTicks = actualTicks - 1;
+        while actualTicks>0:
+            self.pinOnOff([15, 18]);
+            time.sleep(0.0001);
+            self.pinOnOff([4, 17]);
+            time.sleep(0.0001);
+            self.pinOnOff([15, 18]);
+            time.sleep(0.0001);
+            self.pinOnOff([4, 17]);
+            time.sleep(0.0001);        
+            actualTicks = actualTicks - 1;
+    if Direction == "Right":
+        self.pinOnOff([4, 18])
+        time.sleep(0.0001)
+        self.pinOnOff([4, 17])
+        time.sleep(0.0001)
+        self.pinOnOff([15, 18])
+        time.sleep(0.0001)
+        self.pinOnOff([4, 17])
+        time.sleep(0.0001)       
+        actualTicks = actualTicks - 1
+        while actualTicks>0:
+            self.pinOnOff([15, 18])
+            time.sleep(0.0001)
+            self.pinOnOff([4, 17])
+            time.sleep(0.0001)
+            self.pinOnOff([15, 18])
+            time.sleep(0.0001)
+            self.pinOnOff([4, 17])
+            time.sleep(0.0001)         
+            actualTicks = actualTicks - 1
+    for i in [4, 15, 17, 18]:
+      if self.pinStates[i] == 1:
+        self.pinOnOff([i])
 
   "Pathfinding Code"
     
@@ -287,5 +297,5 @@ class piRobot():
 #event_queue = queue.Queue()
 
 myRobot = piRobot()
-#myRobot.TurnMotor(65, "Left")
-myRobot.pinOnOff([9])
+myRobot.TurnMotor(65, "Right")
+myRobot.irMotor(70, "Right")
