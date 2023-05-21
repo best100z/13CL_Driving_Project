@@ -124,8 +124,6 @@ class piRobot():
         time.sleep(0.01)
         self.setFIODrive(4, 0)
         time.sleep(0.01)
-        i += 1
-    
 
   def ReverseTurn90(self, Direction= "Right"):
       if Direction == "Right":
@@ -299,7 +297,5 @@ class piRobot():
 #event_queue = queue.Queue()
 
 myRobot = piRobot()
-myRobot.irMotor(3, "Left")
-myRobot.DriveMotor(10, "Forward")
-myRobot.VoltageWorked()
+myRobot.DriveMotor(100, "Forward")
 
