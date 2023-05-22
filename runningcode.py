@@ -1,3 +1,4 @@
+
 import numpy as np
 import RPi.GPIO as gpio
 import u3
@@ -166,10 +167,10 @@ class piRobot():
 
   def DriveStraight(self, cm = 1, Direction = "Forward"):
       if self.angle >0:
-          self.TurnMotor(Steering_Angle.angle, "Left")
+          self.TurnMotor(self.angle, "Left")
       if self.angle <0:
-          self.TurnMotor(abs(Steering_Angle.angle), "Right")
-      selt.DriveMotorCM(cm, Direction)
+          self.TurnMotor(abs(self.angle), "Right")
+      self.DriveMotorCM(cm, Direction)
       
   
   def irMotor(self, angle = 0, Direction = "Left"):
@@ -224,12 +225,12 @@ class piRobot():
         self.pinOnOff([i])
  
 
-   def reset(self):
+  def reset(self):
       self.UhOh()
       if self.angle >0:
-          self.TurnMotor(Steering_Angle.angle, "Left")
+          self.TurnMotor(self.angle, "Left")
       if self.angle <0:
-          self.TurnMotor(abs(Steering_Angle.angle), "Right")
+          self.TurnMotor(abs(self.angle), "Right")
 
   "Pathfinding Code"
     
@@ -255,18 +256,18 @@ class piRobot():
           x = 100
           return x      
 
-  def TurntoAngle(angle): #This code turns the scope to a specific angle relative to the car
+  def TurntoAngle(self,angle): #This code turns the scope to a specific angle relative to the car
       current_angle = self.irangle
       final_dest = angle - current_angle
       if final_dest > 0:
-          TurnScope(abs(final_dest), "Right")
+          self.irMotor(abs(final_dest), "Right")
           return
       else:
-          TurnScope(abs(final_dest), "Left")
+          self.irMotor(abs(final_dest), "Left")
           return
 
 
- def ScopeScan(): #This code will take an array of data in a 20 degree range. I think it can be imporved by using TurntoAngle(), as this array isnt great in terms of where the scope is pointing as there is no perfect middle measurement
+  def ScopeScan(self): #This code will take an array of data in a 20 degree range. I think it can be imporved by using TurntoAngle(), as this array isnt great in terms of where the scope is pointing as there is no perfect middle measurement
     angle_increment = 20
     num_steps = 180//angle_increment
     ir_data = np.zeros(num_steps)
@@ -284,10 +285,11 @@ class piRobot():
     print(ir_data, min_value, min_index)
     return ir_data
    
-   
- stop_flag = False 
+  event_queue = queue.Queue() #defines the Queue variable
 
- def sensor_loop(self): #This is the main sensing decision making code
+  stop_flag = False 
+
+  def sensor_loop(self): #This is the main sensing decision making code
     front_min = 45 # cm Minimum values telling the car when to stop
     diag_min = 45 #cm Minimum values for the diagonal turns. These are the two sensors pointing off to the sides
     global stop_flag
@@ -295,7 +297,7 @@ class piRobot():
         front_dist = self.VoltagetoDistance(0) #scan the front 
         if front_dist >= front_min: #if we still have space drive forward
             print("Continuing straight...") #for me to know what the robot is thinking
-            event_queue.put("Drive") #passes drive to the queue loop, see the queue loop for more detail
+            self.event_queue.put("Drive") #passes drive to the queue loop, see the queue loop for more detail
             time.sleep(0.1) #This sleeps the code to give the motor time to do its thing. If it doesnt sleep it will make a massive queue of drives, so when the stop command comes its so late that the robot will just crash lol
         else: #front sensor isnt happy anymore. Passes to next layer of decision making.
             #diag_right_dist = VoltagetoDistance(2) #These would be the AIN readings from the left and right sensons once mounted, respectively
@@ -303,19 +305,19 @@ class piRobot():
             diag_left_dist = 10 #I have these set arbitrarily to always trigger the next loop where the scanner decides
             diag_right_dist = 10
             print("Stopping the robot...")
-            event_queue.put("Stop") 
+            self.event_queue.put("Stop") 
             
             if diag_min <= diag_right_dist and diag_min <= diag_left_dist: #If both left and right look okay, arbitrarily go right
                 print("Turning right...")
-                event_queue.put("Right Turn")
+                self.event_queue.put("Right Turn")
                 break
             elif diag_min <= diag_right_dist: #If right is good, go right
                 print("Turning right...")
-                event_queue.put("Right Turn")
+                self.event_queue.put("Right Turn")
                 break
             elif diag_min <= diag_left_dist: #If left is good, go left
                 print("Turning left...")
-                event_queue.put("Left Turn")
+                self.event_queue.put("Left Turn")
                 break
             else: #If neither is good, go onto the scanning loop
                 array_data = self.ScopeScan() 
@@ -328,13 +330,13 @@ class piRobot():
                             else:
                                 print(f"Turning to angle {(((i)/2)*(-1)**i) * 20 } degrees...") #This tells the angle of the turn, measured from centerline. Negative values correspond to left turns
                                 angle = (((i)/2)*(-1)**i) * 20
-                                event_queue.put("Angle Turn", angle) #I want to pass both a queue event and a variable to an event queue, but it doesnt work just yet.
+                                self.event_queue.put("Angle Turn", angle) #I want to pass both a queue event and a variable to an event queue, but it doesnt work just yet.
                                 stop_flag = True #This will stop the scanning queue, allowing a different loop to take over
                                 break
                         else: #same as above but for the other direction
                             print(f"Turning to angle {(((i+1)/2)*(-1)**i) * 20 } degrees...")
                             angle = (((i)/2)*(-1)**i) * 20
-                            event_queue.put("Angle Turn", angle)
+                            self.event_queue.put("Angle Turn", angle)
                             stop_flag = True
                             break
                     elif i+1 == len(decision_array): #I havent coded this yet, but this is the option for going backwards cause the robot messed up
@@ -365,52 +367,52 @@ class piRobot():
                    self.TurnScope(abs(angle), "Left") #This turns the scope to look at the obstace, and measure if the side is clear. 
                elif angle < 0:
                    self.TurnScope(abs(angle), "Right")
-               side_dist = VoltagetoDistance(1)
-               if abs(scopeangle.angle) > 0: 
+               side_dist = self.VoltagetoDistance(1)
+               if abs(self.irangle) > 0: 
                    side_dist = self.VoltagetoDistance(1)
                    if side_dist < 100: #If the side isnt clear, keep turning the car
                        self.DriveMotor(1, "Forward")
                        i += 1
                    if side_dist >= 100: #Now that the scanner cant see anything, it passes the return to course loop. I have no clue if this will even work
                        print("returning to course")
-                       event_queue.put("RtC")
+                       self.event_queue.put("RtC")
        while i == 500:  #Once the car has turned 90 degress
            print("made it to 90")
-           if Steering_Angle.angle > 0: #This two commands will turn the steering straight, then will turn the scope to look directly to the side where the obstacle would be
+           if self.angle > 0: #This two commands will turn the steering straight, then will turn the scope to look directly to the side where the obstacle would be
                self.TurnMotor(65, "Left")
                self.TurntoAngle(-90)
-           if Steering_Angle.angle < 0:
+           if self.angle < 0:
                self.TurnMotor(65, "Right")
                self.TurntoAngle(65)
-           side_dist = self.VoltagetoDistance1()   
+           side_dist = self.VoltagetoDistance(1)   
            if side_dist < 100: #Drive until the scope doesnt see anything on the side
                self.DriveMotor(1, "Forward")
                #avoidlogic.updatestraightsteps() #Keep track of the amount of steps taken directly straight, used for return to course
            if side_dist >= 100:
-               event_queue.put("RtC") #Side is clear, go back to the og course
+               self.event_queue.put("RtC") #Side is clear, go back to the og course
                print("returning to course")                     
 
-  def event_loop():
+  def event_loop(self):
       while True:
-          event = event_queue.get()   
+          event = self.event_queue.get()   
           if event == "forward":
-              DriveStraight(1, "Forward")
+              self.DriveMotor(1, "Forward")
           if event == "turn":
-              DrivingTurn(1,"Right")
+              self.DriveMotor(1,"Right")
 
 
   sensor_thread = threading.Thread(target=sensor_loop)
   event_thread = threading.Thread(target=event_loop)
 
 
-  def GOGOGO():
-      sensor_thread.start()
-      event_thread.start()
+  def GOGOGO(self):
+      self.sensor_thread.start()
+      self.event_thread.start()
 
-  def Stop():
-      sensor_thread.stop()
-      event_thread.stop()
-      reset()
+  def Stop(self):
+      self.sensor_thread.stop()
+      self.event_thread.stop()
+      self.reset()
  
 #event_queue = queue.Queue()
 
