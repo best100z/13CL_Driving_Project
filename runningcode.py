@@ -231,6 +231,7 @@ class piRobot():
           self.TurnMotor(self.angle, "Left")
       if self.angle <0:
           self.TurnMotor(abs(self.angle), "Right")
+      self.TurntoAngle(0)
 
   "Pathfinding Code"
     
@@ -412,5 +413,8 @@ class piRobot():
 #event_queue = queue.Queue()
 
 myRobot = piRobot()
+myRobot.TurnMotor(65, "Right")
+myRoboy.irMotor(80, "Left')
 myRobot.avoid_loop(-20)
+myRobot.reset()
 
