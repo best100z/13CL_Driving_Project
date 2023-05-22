@@ -298,7 +298,7 @@ class piRobot():
         front_dist = self.VoltagetoDistance(0) #scan the front 
         if front_dist >= front_min: #if we still have space drive forward
             print("Continuing straight...") #for me to know what the robot is thinking
-            self.event_queue.put("Drive") #passes drive to the queue loop, see the queue loop for more detail
+            self.event_queue.put("Drive", 1) #passes drive to the queue loop, see the queue loop for more detail
             time.sleep(0.1) #This sleeps the code to give the motor time to do its thing. If it doesnt sleep it will make a massive queue of drives, so when the stop command comes its so late that the robot will just crash lol
         else: #front sensor isnt happy anymore. Passes to next layer of decision making.
             #diag_right_dist = VoltagetoDistance(2) #These would be the AIN readings from the left and right sensons once mounted, respectively
@@ -306,19 +306,19 @@ class piRobot():
             diag_left_dist = 10 #I have these set arbitrarily to always trigger the next loop where the scanner decides
             diag_right_dist = 10
             print("Stopping the robot...")
-            self.event_queue.put("Stop") 
+            self.event_queue.put("Stop", 1) 
             
             if diag_min <= diag_right_dist and diag_min <= diag_left_dist: #If both left and right look okay, arbitrarily go right
                 print("Turning right...")
-                self.event_queue.put("Right Turn")
+                self.event_queue.put("Right Turn", 1)
                 break
             elif diag_min <= diag_right_dist: #If right is good, go right
                 print("Turning right...")
-                self.event_queue.put("Right Turn")
+                self.event_queue.put("Right Turn", 1)
                 break
             elif diag_min <= diag_left_dist: #If left is good, go left
                 print("Turning left...")
-                self.event_queue.put("Left Turn")
+                self.event_queue.put("Left Turn", 1)
                 break
             else: #If neither is good, go onto the scanning loop
                 array_data = self.ScopeScan() 
@@ -331,13 +331,13 @@ class piRobot():
                             else:
                                 print(f"Turning to angle {(((i)/2)*(-1)**i) * 20 } degrees...") #This tells the angle of the turn, measured from centerline. Negative values correspond to left turns
                                 angle = (((i)/2)*(-1)**i) * 20
-                                self.event_queue.put("Angle Turn", angle) #I want to pass both a queue event and a variable to an event queue, but it doesnt work just yet.
+                                self.event_queue.put("AngleTurn", angle) #I want to pass both a queue event and a variable to an event queue, but it doesnt work just yet.
                                 stop_flag = True #This will stop the scanning queue, allowing a different loop to take over
                                 break
                         else: #same as above but for the other direction
                             print(f"Turning to angle {(((i+1)/2)*(-1)**i) * 20 } degrees...")
                             angle = (((i)/2)*(-1)**i) * 20
-                            self.event_queue.put("Angle Turn", angle)
+                            self.event_queue.put("AngleTurn", angle)
                             stop_flag = True
                             break
                     elif i+1 == len(decision_array): #I havent coded this yet, but this is the option for going backwards cause the robot messed up
