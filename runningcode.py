@@ -373,7 +373,7 @@ class piRobot():
                   return
                self.DriveMotor(1, "Forward")
        while i == 1000:  #Once the car has turned 90 degress
-         return
+           return
            print("made it to 90")
            if self.angle > 0: #This two commands will turn the steering straight, then will turn the scope to look directly to the side where the obstacle would be
                self.TurnMotor(65, "Left")
@@ -415,6 +415,11 @@ class piRobot():
 
 myRobot = piRobot()
 myRobot.TurnMotor(65, "Right")
-myRobot.avoid_loop(-20)
-myRobot.reset()
+print(myRobot.VoltagetoDistance(0))
+time.sleep(3)
+print(myRobot.VoltagetoDistance(0))
+time.sleep(3)
+print(myRobot.VoltagetoDistance(0))
+time.sleep(3)
+print(myRobot.VoltagetoDistance(0))
 
