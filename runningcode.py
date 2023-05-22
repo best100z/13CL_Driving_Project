@@ -417,6 +417,7 @@ class piRobot():
 #event_queue = queue.Queue()
 
 myRobot = piRobot()
-myRobot.irMotor(5, "Right")
+myRobot.avoid_loop(-20)
+myRobot.reset()
 
 
