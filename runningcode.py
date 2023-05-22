@@ -418,6 +418,5 @@ class piRobot():
 
 myRobot = piRobot()
 myRobot.irMotor(5, "Right")
-myRobot.avoid_loop(-20)
-myRobot.reset()
+
 
