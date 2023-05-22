@@ -352,7 +352,7 @@ class piRobot():
            self.TurnMotor(65, "Right")
        elif angle < 0:
            self.TurnMotor(65, "Left")
-       while i < 500: #So while the car isnt turned 90 yet
+       while i < 1000: #So while the car isnt turned 90 yet
            print("Starting to Turn")
            front_dist = self.VoltagetoDistance(0)
            if 10 < front_dist < 100: #Drive forward, ie turn
@@ -372,7 +372,8 @@ class piRobot():
                if side_dist >= 100:
                   return
                self.DriveMotor(1, "Forward")
-       while i == 500:  #Once the car has turned 90 degress
+       while i == 1000:  #Once the car has turned 90 degress
+         return
            print("made it to 90")
            if self.angle > 0: #This two commands will turn the steering straight, then will turn the scope to look directly to the side where the obstacle would be
                self.TurnMotor(65, "Left")
@@ -414,7 +415,6 @@ class piRobot():
 
 myRobot = piRobot()
 myRobot.TurnMotor(65, "Right")
-myRobot.irMotor(10, "Right")
 myRobot.avoid_loop(-20)
 myRobot.reset()
 
