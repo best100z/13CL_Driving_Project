@@ -124,6 +124,8 @@ class piRobot():
         time.sleep(0.01)
         self.setFIODrive(4, 0)
         time.sleep(0.01)
+      
+    
 """
   def ReverseTurn90(self, Direction= "Right"):
       if Direction == "Right":
@@ -169,14 +171,6 @@ class piRobot():
           self.TurnMotor(abs(Steering_Angle.angle), "Right")
       selt.DriveMotorCM(cm, Direction)
       """
-
-
-  def reset(self):
-      self.UhOh()
-      if self.angle >0:
-          self.TurnMotor(Steering_Angle.angle, "Left")
-      if self.angle <0:
-          self.TurnMotor(abs(Steering_Angle.angle), "Right")
   
   def irMotor(self, angle = 0, Direction = "Left"):
     stepAngle = 360/4096*8;
@@ -228,6 +222,14 @@ class piRobot():
     for i in [4, 15, 17, 18]:
       if self.pinStates[i] == 1:
         self.pinOnOff([i])
+ 
+
+   def reset(self):
+      self.UhOh()
+      if self.angle >0:
+          self.TurnMotor(Steering_Angle.angle, "Left")
+      if self.angle <0:
+          self.TurnMotor(abs(Steering_Angle.angle), "Right")
 
   "Pathfinding Code"
     
