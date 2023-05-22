@@ -414,7 +414,7 @@ class piRobot():
 
 myRobot = piRobot()
 myRobot.TurnMotor(65, "Right")
-myRoboy.irMotor(80, "Left')
+myRobot.irMotor(80, "Left")
 myRobot.avoid_loop(-20)
 myRobot.reset()
 
