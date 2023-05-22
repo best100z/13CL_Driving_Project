@@ -430,7 +430,7 @@ class piRobot():
 
 myRobot = piRobot()
 myRobot.avoid_loop(-20)
-myRobot.reset()
+
 
 
 
