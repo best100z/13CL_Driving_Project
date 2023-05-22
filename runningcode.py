@@ -368,14 +368,9 @@ class piRobot():
                elif angle < 0:
                    self.TurnScope(abs(angle), "Right")
                side_dist = self.VoltagetoDistance(1)
-               if abs(self.irangle) > 0: 
-                   side_dist = self.VoltagetoDistance(1)
-                   if side_dist < 100: #If the side isnt clear, keep turning the car
-                       self.DriveMotor(1, "Forward")
-                       i += 1
-                   if side_dist >= 100: #Now that the scanner cant see anything, it passes the return to course loop. I have no clue if this will even work
-                       print("returning to course")
-                       self.event_queue.put("RtC")
+               if side_dist >= 100:
+                  return
+               self.DriveMotor(1, "Forward")
        while i == 500:  #Once the car has turned 90 degress
            print("made it to 90")
            if self.angle > 0: #This two commands will turn the steering straight, then will turn the scope to look directly to the side where the obstacle would be
