@@ -126,7 +126,7 @@ class piRobot():
         time.sleep(0.01)
       
     
-"""
+
   def ReverseTurn90(self, Direction= "Right"):
       if Direction == "Right":
           self.TurnMotor(65, "Left")
@@ -170,7 +170,7 @@ class piRobot():
       if self.angle <0:
           self.TurnMotor(abs(Steering_Angle.angle), "Right")
       selt.DriveMotorCM(cm, Direction)
-      """
+      
   
   def irMotor(self, angle = 0, Direction = "Left"):
     stepAngle = 360/4096*8;
