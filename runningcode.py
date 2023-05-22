@@ -396,6 +396,9 @@ class piRobot():
               self.DriveMotor(1, "Forward")
           if event == "turn":
               self.DriveMotor(1,"Right")
+          if event == "kms":
+              print("kms")
+
 
 
   sensor_thread = threading.Thread(target=sensor_loop)
