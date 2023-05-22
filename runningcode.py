@@ -390,13 +390,26 @@ class piRobot():
 
   def event_loop(self):
       while True:
-          event = self.event_queue.get()   
-          if event == "forward":
+          event = event_queue.get()  
+          command, value = event
+          if event == "Drive":
               self.DriveMotor(1, "Forward")
-          if event == "turn":
-              self.DriveMotor(1,"Right")
-          if event == "kms":
-              print("kms")
+          if event == "Stop":
+             self. UhOh()
+          if event == "Right Turn":
+              InitiateTurn(90, "Right")
+              time.sleep(0.5)
+              AvoidObstacle()
+          if event == "Left Turn":
+              InitiateTurn(90, "Left")
+              time.sleep(0.5)
+              AvoidObstacle()
+          if event == "AngleTurn":
+              angle = value
+              self.avoid_loop(angle)
+          if event == "RtC":
+              RtC()
+                  
 
 
 
