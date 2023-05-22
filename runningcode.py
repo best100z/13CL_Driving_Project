@@ -172,12 +172,12 @@ class piRobot():
 
 
   def reset(self):
-       self.UhOh()
-       if self.angle >0:
-           self.TurnMotor(Steering_Angle.angle, "Left")
-       if self.angle <0:
-           self.TurnMotor(abs(Steering_Angle.angle), "Right")
-
+      self.UhOh()
+      if self.angle >0:
+          self.TurnMotor(Steering_Angle.angle, "Left")
+      if self.angle <0:
+          self.TurnMotor(abs(Steering_Angle.angle), "Right")
+  
   def irMotor(self, angle = 0, Direction = "Left"):
     stepAngle = 360/4096*8;
     if Direction == "Left":
