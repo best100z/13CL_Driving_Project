@@ -429,7 +429,10 @@ class piRobot():
 #event_queue = queue.Queue()
 
 myRobot = piRobot()
-myRobot.avoid_loop(-20)
+myRobot.TurnMotor(65, "Right")
+myRobot.irMotor(90, "Right")
+myRobot.TurnMotor(65, "Left")
+myRobot.TurntoAngle(0)
 
 
 
