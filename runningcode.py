@@ -364,14 +364,13 @@ class piRobot():
                break
            if front_dist >= 100: #Once the car has turned far enough that the front is clear, we now will drive until we are fully past the obstace. NOTHING FROM HERE ON HAS BEEN TESTED AND FUNCITONAL
                print("Checking the Hip")
-               if angle > 0:
-                   self.TurnScope(abs(angle), "Left") #This turns the scope to look at the obstace, and measure if the side is clear. 
-               elif angle < 0:
-                   self.TurnScope(abs(angle), "Right")
+               self.TurntoAngle(angle) #Tursn scope to look at obstacle
                side_dist = self.VoltagetoDistance(1)
+               if side_dist < 100:
+                  self.DriveMotor(1, "Forward")
+                  i += 1
                if side_dist >= 100:
                   return
-               self.DriveMotor(1, "Forward")
        while i == 1000:  #Once the car has turned 90 degress
            return
            print("made it to 90")
