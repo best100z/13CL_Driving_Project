@@ -430,7 +430,6 @@ class piRobot():
 
 myRobot = piRobot()
 myRobot.TurnMotor(65, "Right")
-myRobot.avoid_loop(-20)
 
 
 
