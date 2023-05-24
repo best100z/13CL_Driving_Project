@@ -272,14 +272,14 @@ class piRobot():
     angle_increment = 20
     num_steps = 180//angle_increment
     ir_data = np.zeros(num_steps)
-    self.TurnScope(90, "Left")
+    self.irMotor(90, "Left")
     self.update_irangle(self.irangle-90)
     for i in range(num_steps):
         time.sleep(0.1)
         ir_data[i] = self.VoltagetoDistance(1)
         self.iupdate_irangle(self.irangle + angle_increment)
-        self.TurnScope(angle_increment, "Right")
-    self.TurnScope(90, "Left")
+        self.irMotor(angle_increment, "Right")
+    self.irMotorScope(90, "Left")
     self.update_irangle(self.irangle-90)
     min_value = np.min(ir_data)
     min_index = np.argmin(ir_data)
