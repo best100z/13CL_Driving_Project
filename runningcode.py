@@ -429,7 +429,7 @@ class piRobot():
 #event_queue = queue.Queue()
 
 myRobot = piRobot()
-myRobot.irMotor(15, "Right")
+myRobot.irMotor(10, "Left")
 
 
 
