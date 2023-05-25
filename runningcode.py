@@ -430,6 +430,7 @@ class piRobot():
 
 myRobot = piRobot()
 myRobot.irMotor(10, "Right")
+myRobot.TurnMotor(65, "Right")
 
 
 
