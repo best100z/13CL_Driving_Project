@@ -21,6 +21,8 @@ class piRobot():
     self.labjack = u3.U3()
     self.labjack.configU3()
     self.frontvision = 0
+    self.sensor_thread = threading.Thread(target=self.sensor_loop)
+    self.event_thread = threading.Thread(target=self.event_loop)
 
   def pinOnOff(self, numbers):
     for number in numbers:
@@ -418,8 +420,7 @@ class piRobot():
 
 
 
-  sensor_thread = threading.Thread(target=sensor_loop)
-  event_thread = threading.Thread(target=event_loop)
+ 
 
 
   def GOGOGO(self):
