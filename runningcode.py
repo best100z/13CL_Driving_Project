@@ -295,7 +295,6 @@ class piRobot():
   def sensor_loop(self): #This is the main sensing decision making code
     front_min = 45 # cm Minimum values telling the car when to stop
     diag_min = 45 #cm Minimum values for the diagonal turns. These are the two sensors pointing off to the sides
-    global stop_flag
     while not stop_flag: #do this loop when the stop flag is false
         front_dist = self.VoltagetoDistance(0) #scan the front 
         if front_dist >= front_min: #if we still have space drive forward
