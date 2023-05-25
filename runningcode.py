@@ -430,7 +430,7 @@ class piRobot():
 
 myRobot = piRobot()
 
-myRobot.TurnMotor(65, "Left")
+myRobot.TurnMotor(65, "Right")
 
 
 
