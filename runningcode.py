@@ -395,12 +395,12 @@ class piRobot():
 
   def event_loop(self):
       while True:
-          event = event_queue.get()  
+          event = self.event_queue.get()  
           command, value = event
           if event == "Drive":
               self.DriveMotor(1, "Forward")
           if event == "Stop":
-             self. UhOh()
+              self.UhOh()
           if event == "Right Turn":
               InitiateTurn(90, "Right")
               time.sleep(0.5)
@@ -418,8 +418,8 @@ class piRobot():
 
 
 
-  self.sensor_thread = threading.Thread(target=sensor_loop)
-  self.event_thread = threading.Thread(target=event_loop)
+  sensor_thread = threading.Thread(target=sensor_loop)
+  event_thread = threading.Thread(target=event_loop)
 
 
   def GOGOGO(self):
