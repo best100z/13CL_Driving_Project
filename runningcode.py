@@ -288,7 +288,7 @@ class piRobot():
    
   event_queue = queue.Queue() #defines the Queue variable
 
-  stop_flag == False 
+  stop_flag = False 
 
   def sensor_loop(self): #This is the main sensing decision making code
     front_min = 45 # cm Minimum values telling the car when to stop
@@ -373,7 +373,8 @@ class piRobot():
                   self.irMotor(180, "Right")
                   self.irMotor(180, "Left")
                   self.reset()
-                  global stop_flag = false
+                  global stop_flag 
+                  stop_flag = false
                   return
        while i == 1000:  #Once the car has turned 90 degress
            return
