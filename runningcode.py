@@ -281,7 +281,7 @@ class piRobot():
         ir_data[i] = self.VoltagetoDistance(1)
         self.update_irangle(self.irangle + angle_increment)
         self.irMotor(angle_increment, "Right")
-    self.irMotorScope(90, "Left")
+    self.irMotor(90, "Left")
     self.update_irangle(self.irangle-90)
     min_value = np.min(ir_data)
     min_index = np.argmin(ir_data)
@@ -293,7 +293,6 @@ class piRobot():
 
 
   def sensor_loop(self): #This is the main sensing decision making code
-
     front_min = 45 # cm Minimum values telling the car when to stop
     diag_min = 45 #cm Minimum values for the diagonal turns. These are the two sensors pointing off to the sides
     while True: #do this loop when the stop flag is false
@@ -396,7 +395,9 @@ class piRobot():
 
   def event_loop(self):
       while True:
-          event, value = self.event_queue.get()  
+          event_data = self.event_queue.get()  
+          event = event_data[0]
+          value = event_data[1]
           if event == "Drive":
               self.DriveMotor(1, "Forward")
           if event == "Stop":
@@ -422,8 +423,6 @@ class piRobot():
 
 
   def GOGOGO(self):
-      self.irMotor(5, "Right")
-      self.irMotor(5, "Left")
       self.sensor_thread.start()
       self.event_thread.start()
 
@@ -435,7 +434,7 @@ class piRobot():
 #event_queue = queue.Queue()
 
 myRobot = piRobot()
-myRobot.irMotor(170, "Right")
+myRobot.irMotor(90, "Left")
 myRobot.update_irangle(0)
 myRobot.GOGOGO()
 
