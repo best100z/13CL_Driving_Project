@@ -293,13 +293,14 @@ class piRobot():
 
 
   def sensor_loop(self): #This is the main sensing decision making code
-    front_min = 45 # cm Minimum values telling the car when to stop
+    front_min = 35 # cm Minimum values telling the car when to stop
     diag_min = 45 #cm Minimum values for the diagonal turns. These are the two sensors pointing off to the sides
-    while True: #do this loop when the stop flag is false
+    i = 0
+    while i < 1: #do this loop when the stop flag is false
         front_dist = self.VoltagetoDistance(1) #scan the front 
         print(front_dist)
         if front_dist >= front_min: #if we still have space drive forward
-            print("Continuing straight...") #for me to know what the robot is thinking
+              #for me to know what the robot is thinking
             self.event_queue.put("Drive", 1) #passes drive to the queue loop, see the queue loop for more detail
             time.sleep(0.1) #This sleeps the code to give the motor time to do its thing. If it doesnt sleep it will make a massive queue of drives, so when the stop command comes its so late that the robot will just crash lol
         else: #front sensor isnt happy anymore. Passes to next layer of decision making.
@@ -335,12 +336,13 @@ class piRobot():
                                 angle = (((i)/2)*(-1)**i) * 20
                                 self.event_queue.put("AngleTurn", angle) #I want to pass both a queue event and a variable to an event queue, but it doesnt work just yet.
                                  #This will stop the scanning queue, allowing a different loop to take over
+                                 i+=1
                                 break
                         else: #same as above but for the other direction
                             print(f"Turning to angle {(((i+1)/2)*(-1)**i) * 20 } degrees...")
                             angle = (((i)/2)*(-1)**i) * 20
                             self.event_queue.put("AngleTurn", angle)
-                            
+                            i+=1
                             break
                     elif i+1 == len(decision_array): #I havent coded this yet, but this is the option for going backwards cause the robot messed up
                         print("didn't find acceptable range before middle of array, turn around")
@@ -374,6 +376,7 @@ class piRobot():
                if side_dist >= 100:
                   self.irMotor(180, "Right")
                   self.irMotor(180, "Left")
+                  self.sensor_loop()
                   self.reset()
                   
                   return
@@ -400,17 +403,11 @@ class piRobot():
           event = event_data[0]
           value = event_data[1]
           if event == "Drive":
+              print("drive")
               self.DriveMotor(1, "Forward")
           if event == "Stop":
+              print("stop")
               self.UhOh()
-          if event == "Right Turn":
-              InitiateTurn(90, "Right")
-              time.sleep(0.5)
-              AvoidObstacle()
-          if event == "Left Turn":
-              InitiateTurn(90, "Left")
-              time.sleep(0.5)
-              AvoidObstacle()
           if event == "AngleTurn":
               angle = value
               print("going to avoid loop")
@@ -425,8 +422,8 @@ class piRobot():
 
 
   def GOGOGO(self):
-      self.sensor_thread.start()
       self.event_thread.start()
+      self.sensor_loop()
 
   def Stop(self):
       self.sensor_thread.stop()
