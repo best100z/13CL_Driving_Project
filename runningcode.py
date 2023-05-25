@@ -293,6 +293,7 @@ class piRobot():
   stop_flag = False 
 
   def sensor_loop(self): #This is the main sensing decision making code
+    global stop_flag
     front_min = 45 # cm Minimum values telling the car when to stop
     diag_min = 45 #cm Minimum values for the diagonal turns. These are the two sensors pointing off to the sides
     while not stop_flag: #do this loop when the stop flag is false
