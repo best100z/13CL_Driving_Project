@@ -279,7 +279,7 @@ class piRobot():
     for i in range(num_steps):
         time.sleep(0.1)
         ir_data[i] = self.VoltagetoDistance(1)
-        self.iupdate_irangle(self.irangle + angle_increment)
+        self.update_irangle(self.irangle + angle_increment)
         self.irMotor(angle_increment, "Right")
     self.irMotorScope(90, "Left")
     self.update_irangle(self.irangle-90)
@@ -396,8 +396,7 @@ class piRobot():
 
   def event_loop(self):
       while True:
-          event = self.event_queue.get()  
-          command, value = event
+          event, value = self.event_queue.get()  
           if event == "Drive":
               self.DriveMotor(1, "Forward")
           if event == "Stop":
