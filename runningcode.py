@@ -298,7 +298,7 @@ class piRobot():
     diag_min = 45 #cm Minimum values for the diagonal turns. These are the two sensors pointing off to the sides
     i = 0
     while i < 1: #do this loop when the stop flag is false
-        front_dist = self.VoltagetoDistance(1) #scan the front 
+        front_dist = self.VoltagetoDistance(0) #scan the front 
         print(front_dist)
         if front_dist >= front_min: #if we still have space drive forward
               #for me to know what the robot is thinking
@@ -340,15 +340,16 @@ class piRobot():
                                 angle = (((i)/2)*(-1)**i) * 20
                                 self.event_queue.put("AngleTurn", angle) #I want to pass both a queue event and a variable to an event queue, but it doesnt work just yet.
                                  #This will stop the scanning queue, allowing a different loop to take over
-                                self.avoid_loop(angle)
                                 i+=1
+                                self.avoid_loop(angle)
+                                
                                 return
                         else: #same as above but for the other direction
                             print(f"Turning to angle {(((i+1)/2)*(-1)**i) * 20 } degrees...")
                             angle = (((i)/2)*(-1)**i) * 20
                             self.event_queue.put("AngleTurn", angle)
-                            self.avoid_loop(angle)
                             i+=1
+                            self.avoid_loop(angle)
                             return
                     elif i+1 == len(decision_array): #I havent coded this yet, but this is the option for going backwards cause the robot messed up
                         print("didn't find acceptable range before middle of array, turn around")
@@ -438,8 +439,7 @@ class piRobot():
 #event_queue = queue.Queue()
 
 myRobot = piRobot()
-myRobot.TurnMotor(65,"Right")
-myRobot.update_angle(0)
+
 myRobot.sensor_loop()
 
 
