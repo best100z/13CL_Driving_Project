@@ -288,7 +288,7 @@ class piRobot():
    
   event_queue = queue.Queue() #defines the Queue variable
 
-  stop_flag = False 
+  stop_flag == False 
 
   def sensor_loop(self): #This is the main sensing decision making code
     front_min = 45 # cm Minimum values telling the car when to stop
