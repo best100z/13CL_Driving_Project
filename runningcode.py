@@ -303,7 +303,9 @@ class piRobot():
         if front_dist >= front_min: #if we still have space drive forward
               #for me to know what the robot is thinking
             self.event_queue.put("Drive", 1) #passes drive to the queue loop, see the queue loop for more detail
-            time.sleep(0.1) #This sleeps the code to give the motor time to do its thing. If it doesnt sleep it will make a massive queue of drives, so when the stop command comes its so late that the robot will just crash lol
+            self.DriveMotor(1, "Forward")
+            print("vroom vroom")
+             #This sleeps the code to give the motor time to do its thing. If it doesnt sleep it will make a massive queue of drives, so when the stop command comes its so late that the robot will just crash lol
         else: #front sensor isnt happy anymore. Passes to next layer of decision making.
             #diag_right_dist = VoltagetoDistance(2) #These would be the AIN readings from the left and right sensons once mounted, respectively
             #diag_left_dist = VoltagetoDistance(3)
@@ -337,13 +339,13 @@ class piRobot():
                                 angle = (((i)/2)*(-1)**i) * 20
                                 self.event_queue.put("AngleTurn", angle) #I want to pass both a queue event and a variable to an event queue, but it doesnt work just yet.
                                  #This will stop the scanning queue, allowing a different loop to take over
-                                i+=1
+                                self.avoid_loop(angle)
                                 break
                         else: #same as above but for the other direction
                             print(f"Turning to angle {(((i+1)/2)*(-1)**i) * 20 } degrees...")
                             angle = (((i)/2)*(-1)**i) * 20
                             self.event_queue.put("AngleTurn", angle)
-                            i+=1
+                            self.avoid_loop(angle)
                             break
                     elif i+1 == len(decision_array): #I havent coded this yet, but this is the option for going backwards cause the robot messed up
                         print("didn't find acceptable range before middle of array, turn around")
@@ -377,9 +379,9 @@ class piRobot():
                if side_dist >= 100:
                   self.irMotor(180, "Right")
                   self.irMotor(180, "Left")
-                  self.sensor_loop()
-                  self.reset()
                   
+                  self.reset()
+                 
                   return
        while i == 500:  #Once the car has turned 90 degress
            return
@@ -433,7 +435,6 @@ class piRobot():
 #event_queue = queue.Queue()
 
 myRobot = piRobot()
-myRobot.GOGOGO()
 myRobot.sensor_loop()
 
 
