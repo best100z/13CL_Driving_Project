@@ -424,7 +424,7 @@ class piRobot():
 
   def GOGOGO(self):
       self.irMotor(5, "Right")
-      self.irMotor(5, "Left')
+      self.irMotor(5, "Left")
       self.sensor_thread.start()
       self.event_thread.start()
 
