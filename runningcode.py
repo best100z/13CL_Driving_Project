@@ -296,7 +296,7 @@ class piRobot():
     front_min = 45 # cm Minimum values telling the car when to stop
     diag_min = 45 #cm Minimum values for the diagonal turns. These are the two sensors pointing off to the sides
     while True: #do this loop when the stop flag is false
-        front_dist = self.VoltagetoDistance(0) #scan the front 
+        front_dist = self.VoltagetoDistance(1) #scan the front 
         if front_dist >= front_min: #if we still have space drive forward
             print("Continuing straight...") #for me to know what the robot is thinking
             self.event_queue.put("Drive", 1) #passes drive to the queue loop, see the queue loop for more detail
