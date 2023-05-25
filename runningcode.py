@@ -336,7 +336,7 @@ class piRobot():
                                 angle = (((i)/2)*(-1)**i) * 20
                                 self.event_queue.put("AngleTurn", angle) #I want to pass both a queue event and a variable to an event queue, but it doesnt work just yet.
                                  #This will stop the scanning queue, allowing a different loop to take over
-                                 i+=1
+                                i+=1
                                 break
                         else: #same as above but for the other direction
                             print(f"Turning to angle {(((i+1)/2)*(-1)**i) * 20 } degrees...")
