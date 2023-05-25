@@ -370,6 +370,10 @@ class piRobot():
                   self.DriveMotor(1, "Forward")
                   i += 1
                if side_dist >= 100:
+                  self.irMotor(180, "Right")
+                  self.irMotor(180, "Left")
+                  self.reset()
+                  global stop_flag = false
                   return
        while i == 1000:  #Once the car has turned 90 degress
            return
@@ -418,6 +422,8 @@ class piRobot():
 
 
   def GOGOGO(self):
+      self.irMotor(5, "Right")
+      self.irMotor(5, "Left')
       self.sensor_thread.start()
       self.event_thread.start()
 
@@ -429,8 +435,7 @@ class piRobot():
 #event_queue = queue.Queue()
 
 myRobot = piRobot()
-myRobot.TurnMotor(65, "Right")
-myRobot.irMotor(20, "Left")
+myRobot.GOGOGO()
 
 
 
