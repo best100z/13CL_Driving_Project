@@ -309,7 +309,7 @@ class piRobot():
             #diag_left_dist = VoltagetoDistance(3)
             diag_left_dist = 10 #I have these set arbitrarily to always trigger the next loop where the scanner decides
             diag_right_dist = 10
-            print("Stopping the robot...")
+            
             self.event_queue.put("Stop", 1) 
             
             if diag_min <= diag_right_dist and diag_min <= diag_left_dist: #If both left and right look okay, arbitrarily go right
@@ -424,7 +424,6 @@ class piRobot():
 
   def GOGOGO(self):
       self.event_thread.start()
-      self.sensor_loop()
 
   def Stop(self):
       self.sensor_thread.stop()
@@ -435,6 +434,7 @@ class piRobot():
 
 myRobot = piRobot()
 myRobot.GOGOGO()
+myRobot.sensor_loop()
 
 
 
