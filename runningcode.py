@@ -305,6 +305,7 @@ class piRobot():
             self.event_queue.put("Drive", 1) #passes drive to the queue loop, see the queue loop for more detail
             self.DriveMotor(1, "Forward")
             print("vroom vroom")
+            time.sleep(0.1)
              #This sleeps the code to give the motor time to do its thing. If it doesnt sleep it will make a massive queue of drives, so when the stop command comes its so late that the robot will just crash lol
         else: #front sensor isnt happy anymore. Passes to next layer of decision making.
             #diag_right_dist = VoltagetoDistance(2) #These would be the AIN readings from the left and right sensons once mounted, respectively
@@ -435,6 +436,8 @@ class piRobot():
 #event_queue = queue.Queue()
 
 myRobot = piRobot()
+myRobot.TurnMotor(65,"Right")
+myRobot.update_angle(0)
 myRobot.sensor_loop()
 
 
