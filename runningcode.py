@@ -341,13 +341,15 @@ class piRobot():
                                 self.event_queue.put("AngleTurn", angle) #I want to pass both a queue event and a variable to an event queue, but it doesnt work just yet.
                                  #This will stop the scanning queue, allowing a different loop to take over
                                 self.avoid_loop(angle)
-                                break
+                                i+=1
+                                return
                         else: #same as above but for the other direction
                             print(f"Turning to angle {(((i+1)/2)*(-1)**i) * 20 } degrees...")
                             angle = (((i)/2)*(-1)**i) * 20
                             self.event_queue.put("AngleTurn", angle)
                             self.avoid_loop(angle)
-                            break
+                            i+=1
+                            return
                     elif i+1 == len(decision_array): #I havent coded this yet, but this is the option for going backwards cause the robot messed up
                         print("didn't find acceptable range before middle of array, turn around")
                         break
@@ -382,7 +384,7 @@ class piRobot():
                   self.irMotor(180, "Left")
                   
                   self.reset()
-                 
+                  self.sensor_loop()
                   return
        while i == 500:  #Once the car has turned 90 degress
            return
