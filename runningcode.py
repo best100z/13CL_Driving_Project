@@ -297,6 +297,7 @@ class piRobot():
     diag_min = 45 #cm Minimum values for the diagonal turns. These are the two sensors pointing off to the sides
     while True: #do this loop when the stop flag is false
         front_dist = self.VoltagetoDistance(1) #scan the front 
+        print(front_dist)
         if front_dist >= front_min: #if we still have space drive forward
             print("Continuing straight...") #for me to know what the robot is thinking
             self.event_queue.put("Drive", 1) #passes drive to the queue loop, see the queue loop for more detail
@@ -353,7 +354,7 @@ class piRobot():
            self.TurnMotor(65, "Right")
        elif angle < 0:
            self.TurnMotor(65, "Left")
-       while i < 1000: #So while the car isnt turned 90 yet
+       while i < 500: #So while the car isnt turned 90 yet
            print("Starting to Turn")
            front_dist = self.VoltagetoDistance(1)
            if 10 < front_dist < 100: #Drive forward, ie turn
@@ -376,7 +377,7 @@ class piRobot():
                   self.reset()
                   
                   return
-       while i == 1000:  #Once the car has turned 90 degress
+       while i == 500:  #Once the car has turned 90 degress
            return
            print("made it to 90")
            if self.angle > 0: #This two commands will turn the steering straight, then will turn the scope to look directly to the side where the obstacle would be
@@ -412,6 +413,7 @@ class piRobot():
               AvoidObstacle()
           if event == "AngleTurn":
               angle = value
+              print("going to avoid loop")
               self.avoid_loop(angle)
           if event == "RtC":
               RtC()
@@ -434,8 +436,6 @@ class piRobot():
 #event_queue = queue.Queue()
 
 myRobot = piRobot()
-myRobot.irMotor(90, "Left")
-myRobot.update_irangle(0)
 myRobot.GOGOGO()
 
 
