@@ -23,6 +23,7 @@ class piRobot():
     self.frontvision = 0
     self.sensor_thread = threading.Thread(target=self.sensor_loop)
     self.event_thread = threading.Thread(target=self.event_loop)
+    self.event_queue = queue.Queue() #defines the Queue variable
 
   def pinOnOff(self, numbers):
     for number in numbers:
@@ -288,7 +289,7 @@ class piRobot():
     print(ir_data, min_value, min_index)
     return ir_data
    
-  event_queue = queue.Queue() #defines the Queue variable
+  
 
 
 
