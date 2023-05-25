@@ -3,7 +3,7 @@ import numpy as np
 import RPi.GPIO as gpio
 import u3
 import time
-import threading
+import threadin
 import queue
 import numpy as np
 
