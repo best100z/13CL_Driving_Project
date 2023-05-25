@@ -418,8 +418,8 @@ class piRobot():
 
 
 
-  sensor_thread = threading.Thread(target=sensor_loop)
-  event_thread = threading.Thread(target=event_loop)
+  sensor_thread = threading.Thread(target=self.sensor_loop)
+  event_thread = threading.Thread(target=self.event_loop)
 
 
   def GOGOGO(self):
