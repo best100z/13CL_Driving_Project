@@ -440,7 +440,7 @@ class piRobot():
 
 myRobot = piRobot()
 myRobot.TurnMotor(65, "Left")
-myRobot.DriveMotorCM(10, "Forward")
+myRobot.DriveMotor(64, "Forward")
 
 
 
