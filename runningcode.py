@@ -125,9 +125,9 @@ class piRobot():
         self.setFIODrive(5,0)
     for i in range(Steps):
         self.setFIODrive(4,1)
-        time.sleep(0.1)
+        time.sleep(0.05)
         self.setFIODrive(4, 0)
-        time.sleep(0.1)
+        time.sleep(0.05)
       
     
 
