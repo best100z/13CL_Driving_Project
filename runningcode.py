@@ -439,7 +439,7 @@ class piRobot():
 #event_queue = queue.Queue()
 
 myRobot = piRobot()
-myRobot.irMotor(5, "Left")                  
+myRobot.DriveMotor(10, "Forward")
 
 
 
