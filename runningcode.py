@@ -125,9 +125,9 @@ class piRobot():
         self.setFIODrive(5,0)
     for i in range(Steps):
         self.setFIODrive(4,1)
-        time.sleep(0.01)
+        time.sleep(0.1)
         self.setFIODrive(4, 0)
-        time.sleep(0.01)
+        time.sleep(0.1)
       
     
 
@@ -439,7 +439,7 @@ class piRobot():
 #event_queue = queue.Queue()
 
 myRobot = piRobot()
-myRobot.DriveMotor(10, "Forward")
+myRobot.DriveMotor(50, "Forward")
 
 
 
