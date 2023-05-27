@@ -129,53 +129,25 @@ class piRobot():
         self.setFIODrive(4, 0)
         time.sleep(0.05)
       
+  def DriveMotorCM(self, cm = 0, Direction = "Forward"): #this is the same as above, but with cm instead of steps
+    steps = (6*cm)-4
+    self.DriveMotor(steps, Direction)
+   
+  def TurnInPlace(self, angle=0, Direction="Right"):
+    distance = (angle/2)*36.75
+    self.TurnMotor(65, Direction)
+    self.DriveMotorCM(distance, "Forward")
+    if Direction == "Right"
+      self.TurnMotor(130, "Left")
+    else:
+      self.TurnMotor(130, "Right")
+    self.DriveMotorCM(distance, "Backward")
+    if Direction == "Right"
+      self.TurnMotor(65, "Right")
+    else:
+      self.TurnMotor(65, "Left")
     
 
-  def ReverseTurn90(self, Direction= "Right"):
-      if Direction == "Right":
-          self.TurnMotor(65, "Left")
-          self.DriveMotor(360, "Backward")
-          self.TurnMotor(130, "Right")
-          self.DriveMotor(760, "Forward")
-          self.TurnMotor(65, "Left")
-      if Direction == "Left":
-          self.TurnMotor(65, "Right")
-          self.DriveMotor(360, "Backward")
-          self.TurnMotor(130, "Left")
-          self.DriveMotor(760, "Forward")
-          self.TurnMotor(65, "Right")
-
-  def DrivingTurn(self, Distance = 22, Direction = "Right"): #Need 34cm to avoid obstacle using this
-      if Direction == "Right":
-          self.TurnMotor(65, "Right")
-          self.DriveMotorCM(Distance, "Forward")
-      if Direction == "Left":
-          self.TurnMotor(65, "Left")
-          self.DriveMotorCM(Distance, "Forward")
-
-  def ReverseTurn45(self, Direction = "Right"):
-      if Direction == "Right":
-          self.TurnMotor(65, "Left")
-          self.DriveMotor(180, "Backward")
-          self.TurnMotor(130, "Right")
-          self.DriveMotor(360, "Forward")
-          self.TurnMotor(65, "Left")
-      if Direction == "Left":
-          self.TurnMotor(65, "Right")
-          self.DriveMotor(180, "Backward")
-          self.TurnMotor(130, "Left")
-          self.DriveMotor(360, "Forward")
-          self.TurnMotor(65, "Right")
-
-
-  def DriveStraight(self, cm = 1, Direction = "Forward"):
-      if self.angle >0:
-          self.TurnMotor(self.angle, "Left")
-      if self.angle <0:
-          self.TurnMotor(abs(self.angle), "Right")
-      self.DriveMotorCM(cm, Direction)
-      
-  
   def irMotor(self, angle = 0, Direction = "Left"):
     stepAngle = 360/4096*8;
     if Direction == "Left":
@@ -236,20 +208,13 @@ class piRobot():
           self.TurnMotor(abs(self.angle), "Right")
       self.TurntoAngle(0)
 
-  "Pathfinding Code"
-    
-  def DriveCar(self, distance = 0):
-    pass  
-
- 
-    
-    
+  "Pathfinding Code"    
     
   def getAIN(self, n=0):
       ain0bits, = self.labjack.getFeedback(u3.AIN(n));
       ainValue = self.labjack.binaryToCalibratedAnalogVoltage(ain0bits, isLowVoltage=False, channelNumber = 0);
       return ainValue
- 
+
 
   def VoltagetoDistance(self, n=0):
       Voltage = self.getAIN(n)
@@ -439,6 +404,7 @@ class piRobot():
 #event_queue = queue.Queue()
 
 myRobot = piRobot()
-myRobot.irMotor(65, "Right")
+myRobot.TurnInPlace(45, "Left")
+
 
 
