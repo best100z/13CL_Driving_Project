@@ -466,26 +466,25 @@ class piRobot():
 
 
   def sensor_loop(self): #This is the main sensing decision making code
-    front_min = 35 # cm Minimum values telling the car when to stop
+    front_min = 40 # cm Minimum values telling the car when to stop
     diag_min = 45 #cm Minimum values for the diagonal turns. These are the two sensors pointing off to the sides
     i = 0
-    while i < 1: #do this loop when the stop flag is false
+    while i < 1: #I am using this value as an internal stopflag because I couldnt get the global one to work. 
         front_dist = self.VoltagetoDistance(0) #scan the front 
         print(front_dist)
         if front_dist >= front_min: #if we still have space drive forward
-              #for me to know what the robot is thinking
-            self.event_queue.put("Drive", 1) #passes drive to the queue loop, see the queue loop for more detail
-            self.DriveMotor(1, "Forward")
-            print("vroom vroom")
-            time.sleep(0.1)
-             #This sleeps the code to give the motor time to do its thing. If it doesnt sleep it will make a massive queue of drives, so when the stop command comes its so late that the robot will just crash lol
+            
+            self.event_queue.put("Drive", 1) #passes drive to the queue loop, see the queue loop for more detail. This doesnt work yet, I am just including it in case we can get it to work.
+            self.DriveMotor(1, "Forward") #Drive the motor one step
+            print("vroom vroom") #I think this is a funny way to tell us what it is doing.
+            time.sleep(0.1) #This sleeps the code to give the motor time to do its thing. If it doesnt sleep it will make a massive queue of drives, so when the stop command comes its so late that the robot will just crash lol
         else: #front sensor isnt happy anymore. Passes to next layer of decision making.
             #diag_right_dist = VoltagetoDistance(2) #These would be the AIN readings from the left and right sensons once mounted, respectively
             #diag_left_dist = VoltagetoDistance(3)
             diag_left_dist = 10 #I have these set arbitrarily to always trigger the next loop where the scanner decides
             diag_right_dist = 10
             
-            self.event_queue.put("Stop", 1) 
+            self.event_queue.put("Stop", 1) #Obviously still doesnt do anything. 
             
             if diag_min <= diag_right_dist and diag_min <= diag_left_dist: #If both left and right look okay, arbitrarily go right
                 print("Turning right...")
@@ -494,11 +493,15 @@ class piRobot():
             elif diag_min <= diag_right_dist: #If right is good, go right
                 print("Turning right...")
                 self.event_queue.put("Right Turn", 1)
-                break
+                i+= 1 #triggers the stopflag
+                self.avoid_loop_better(45, diag_right_dist) #passes to the
+                return
             elif diag_min <= diag_left_dist: #If left is good, go left
                 print("Turning left...")
                 self.event_queue.put("Left Turn", 1)
-                break
+                i+= 1 
+                self.avoid_loop_better(-45, diag_left_distance)
+                return
             else: #If neither is good, go onto the scanning loop
                 array_data = self.ScopeScan() 
                 decision_array = [array_data[4],array_data[3],array_data[5],array_data[2],array_data[6],array_data[1],array_data[7],array_data[0],array_data[8]] #This will take the IR data and list it in a way that goes center, then direcetly to the right of center, directly to the left, second from the right and so on. This allows the robot to pick the most optimal path
@@ -513,7 +516,7 @@ class piRobot():
                                 self.event_queue.put("AngleTurn", angle) #I want to pass both a queue event and a variable to an event queue, but it doesnt work just yet.
                                  #This will stop the scanning queue, allowing a different loop to take over
                                 i+=1
-                                self.avoid_loop(angle)
+                                self.avoid_loop_better(angle, dist)
                                 
                                 return
                         else: #same as above but for the other direction
@@ -521,7 +524,7 @@ class piRobot():
                             angle = (((i)/2)*(-1)**i) * 20
                             self.event_queue.put("AngleTurn", angle)
                             i+=1
-                            self.avoid_loop(angle)
+                            self.avoid_loop_better(angle, dist)
                             return
                     elif i+1 == len(decision_array): #I havent coded this yet, but this is the option for going backwards cause the robot messed up
                         print("didn't find acceptable range before middle of array, turn around")
@@ -574,8 +577,32 @@ class piRobot():
                #avoidlogic.updatestraightsteps() #Keep track of the amount of steps taken directly straight, used for return to course
            if side_dist >= 100:
                self.event_queue.put("RtC") #Side is clear, go back to the og course
-               print("returning to course")                     
-
+               print("returning to course")     
+               
+def avoid_loop_better(self, angle, dist):
+    i = 0 #This i value is used to make sure that the car drives at least the distance of the obstacle before checking to see if the side is clear. 
+    while i < dist:
+       if angle > 0: #These just turn the car to point away from the obstacle
+           self.TurnInPlace(abs(angle), "Right")
+       elif angle < 0:
+           self.TurnInPlace(abs(angle), "Left")
+       while i < dist: #So while the car hasn't driven anywhere near far enough
+           front_dist = self.VoltagetoDistance(1)
+           if 20 < front_dist < 100: #Drive forward, if the car is happy
+               self.DriveMotorCM(1, "Forward")
+               i += 1
+               #selfavoidlogic.updateanglesteps() #This is keeping track of the amount of steps that the car has turned at an angle, used to retrace later
+           if front_dist < 20: #If the front sensor gets upset, default back to the sensor loop. 
+               self.sensor_loop() 
+               return
+     if i > dist: #Once the car has more or less driven far enough (doesnt need to be exact), turn the scope to look at the obstacle and keep driving until it is clear.
+         print("Checking the Hip")
+         self.TurntoAngle(-2*angle) #Turn the scope 
+         side_dist = self.VoltagetoDistance(1)
+         if side_dist < 100:
+            self.DriveMotor(1, "Forward")
+            i += 1
+     
   def event_loop(self):
       while True:
           event_data = self.event_queue.get()  
