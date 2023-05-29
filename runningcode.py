@@ -145,7 +145,7 @@ class piRobot():
       self.heading -= actualangle
       self.TurnMotor(130, "Right")
     self.DriveMotorCM(distance, "Backward")
-    if Direction == "Right"
+    if Direction == "Right":
       self.TurnMotor(65, "Right")
     else:
       self.TurnMotor(65, "Left")
