@@ -21,6 +21,7 @@ class piRobot():
     self.labjack = u3.U3()
     self.labjack.configU3()
     self.frontvision = 0
+    self.heading = 0 #This is the direction that the robot is facing relative to its starting direction
     self.sensor_thread = threading.Thread(target=self.sensor_loop)
     self.event_thread = threading.Thread(target=self.event_loop)
     self.event_queue = queue.Queue() #defines the Queue variable
@@ -134,19 +135,42 @@ class piRobot():
     self.DriveMotor(steps, Direction)
    
   def TurnInPlace(self, angle=0, Direction="Right"):
-    distance = (angle/2)*36.75
+    distance = int((angle/2)*36.75)
+    actualangle=(distance/36.75)*2
     self.TurnMotor(65, Direction)
     self.DriveMotorCM(distance, "Forward")
     if Direction == "Right"
+      self.heading -= actualangle
       self.TurnMotor(130, "Left")
     else:
+      self.heading += actualangle
       self.TurnMotor(130, "Right")
     self.DriveMotorCM(distance, "Backward")
     if Direction == "Right"
       self.TurnMotor(65, "Right")
     else:
       self.TurnMotor(65, "Left")
+    return actualangle
     
+  def Turn5DegIncs(self, numIncs=0, direction="Right"):
+    actualangle=(5/36.75)*2*numIncs
+    for i in range(numIncs):
+        self.TurnInPlace(self, angle=5, direction)
+    return actualangle
+         
+  def Turn10DegIncs(self, numIncs=0, direction="Right"):
+    actualangle=(10/36.75)*2*numIncs
+    for i in range(numIncs):
+        self.TurnInPlace(self, angle=10, direction)
+    return actualangle
+
+  def Turn30DegIncs(self, numIncs=0, direction="Right"):
+    actualangle=(30/36.75)*2*numIncs
+    for i in range(numIncs):
+        self.TurnInPlace(self, angle=30, direction)
+    return actualangle
+
+  
 
   def irMotor(self, angle = 0, Direction = "Left"):
     stepAngle = 360/4096*8;
