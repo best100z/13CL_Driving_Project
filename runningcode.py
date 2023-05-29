@@ -17,7 +17,6 @@ class piRobot():
     self.pinStates = np.zeros(28)
     self.angle = 0
     self.irangle = 0
-    self.direction = 1
     self.labjack = u3.U3()
     self.labjack.configU3()
     self.frontvision = 0
@@ -140,10 +139,10 @@ class piRobot():
     self.TurnMotor(65, Direction)
     self.DriveMotorCM(distance, "Forward")
     if Direction == "Right"
-      self.heading -= actualangle
+      self.heading += actualangle
       self.TurnMotor(130, "Left")
     else:
-      self.heading += actualangle
+      self.heading -= actualangle
       self.TurnMotor(130, "Right")
     self.DriveMotorCM(distance, "Backward")
     if Direction == "Right"
@@ -170,8 +169,192 @@ class piRobot():
         self.TurnInPlace(self, angle=30, direction)
     return actualangle
 
-  
-
+  def MovingScan(self, direction="Forward"):
+    scanningdone=False
+    stepAngle = 360/4096*8;
+    scansteps = 90/stepAngle
+    ticker = 0
+    drivecounter=0
+    scancounter=0
+    scanarray = np.zeros(16)
+    if Direction == "Forward":
+        self.setFIODrive(5, 1)
+    if Direction == "Backward":
+        self.setFIODrive(5,0)
+    if self.irangle <= 0:
+      leftmove=45-abs(self.irangle)
+      actualTicks = abs(leftmove/stepAngle)
+      if leftmove>=0:
+         self.pinOnOff([4, 15])
+         time.sleep(0.01)
+         self.pinOnOff([4, 17])
+         time.sleep(0.01)
+         self.pinOnOff([15, 18])
+         time.sleep(0.01)
+         self.pinOnOff([4, 17])
+         time.sleep(0.01)        
+         actualTicks -= 1
+         while actualTicks>0:
+             self.pinOnOff([15, 18])
+             time.sleep(0.01)
+             self.pinOnOff([4, 17])
+             time.sleep(0.01)
+             self.pinOnOff([15, 18])
+             time.sleep(0.01)
+             self.pinOnOff([4, 17])
+             time.sleep(0.01)        
+             actualTicks -= 1
+             if ticker%2==0:
+                self.setFIODrive(4,1)
+             else:
+                self.setFIODrive(4,0)
+                drivecounter+=1
+             ticker+=1
+      else:
+         self.pinOnOff([4, 18])
+         time.sleep(0.01)
+         self.pinOnOff([4, 17])
+         time.sleep(0.01)
+         self.pinOnOff([15, 18])
+         time.sleep(0.01)
+         self.pinOnOff([4, 17])
+         time.sleep(0.01)       
+         actualTicks -=1
+         while actualTicks>0:
+             self.pinOnOff([15, 18])
+             time.sleep(0.01)
+             self.pinOnOff([4, 17])
+             time.sleep(0.01)
+             self.pinOnOff([15, 18])
+             time.sleep(0.01)
+             self.pinOnOff([4, 17])
+             time.sleep(0.01)         
+             actualTicks -=1
+             if ticker%2==0:
+                self.setFIODrive(4,1)
+             else:
+                self.setFIODrive(4,0)
+                drivecounter+=1
+             ticker+=1
+      self.irangle=-45
+    else:
+      rightmove=45-self.irangle
+      actualTicks = abs(leftmove/stepAngle)
+      if rightmove<=0:
+         self.pinOnOff([4, 15])
+         time.sleep(0.01)
+         self.pinOnOff([4, 17])
+         time.sleep(0.01)
+         self.pinOnOff([15, 18])
+         time.sleep(0.01)
+         self.pinOnOff([4, 17])
+         time.sleep(0.01)        
+         actualTicks -= 1
+         while actualTicks>0:
+             self.pinOnOff([15, 18])
+             time.sleep(0.01)
+             self.pinOnOff([4, 17])
+             time.sleep(0.01)
+             self.pinOnOff([15, 18])
+             time.sleep(0.01)
+             self.pinOnOff([4, 17])
+             time.sleep(0.01)        
+             actualTicks -= 1
+             if ticker%2==0:
+                self.setFIODrive(4,1)
+             else:
+                self.setFIODrive(4,0)
+                drivecounter+=1
+             ticker+=1
+      else:
+         self.pinOnOff([4, 18])
+         time.sleep(0.01)
+         self.pinOnOff([4, 17])
+         time.sleep(0.01)
+         self.pinOnOff([15, 18])
+         time.sleep(0.01)
+         self.pinOnOff([4, 17])
+         time.sleep(0.01)       
+         actualTicks -=1
+         while actualTicks>0:
+             self.pinOnOff([15, 18])
+             time.sleep(0.01)
+             self.pinOnOff([4, 17])
+             time.sleep(0.01)
+             self.pinOnOff([15, 18])
+             time.sleep(0.01)
+             self.pinOnOff([4, 17])
+             time.sleep(0.01)         
+             actualTicks -=1
+             if ticker%2==0:
+                self.setFIODrive(4,1)
+             else:
+                self.setFIODrive(4,0)
+                drivecounter+=1
+             ticker+=1
+      self.irangle = 45
+    if self.irange == -45:
+      self.pinOnOff([4, 18])
+      time.sleep(0.01)
+      self.pinOnOff([4, 17])
+      time.sleep(0.01)
+      self.pinOnOff([15, 18])
+      time.sleep(0.01)
+      self.pinOnOff([4, 17])
+      time.sleep(0.01)       
+      scansteps -=1
+      while scansteps>0:
+          self.pinOnOff([15, 18])
+          time.sleep(0.01)
+          self.pinOnOff([4, 17])
+          time.sleep(0.01)
+          self.pinOnOff([15, 18])
+          time.sleep(0.01)
+          self.pinOnOff([4, 17])
+          time.sleep(0.01)
+          if scansteps%8==0:
+               scanarray[scancounter]=self.VoltagetoDistance(1)
+               scancounter+=1
+          scansteps -=1
+          if ticker%2==0:
+             self.setFIODrive(4,1)
+          else:
+             self.setFIODrive(4,0)
+             drivecounter+=1
+          ticker+=1
+    else:
+         self.pinOnOff([4, 15])
+         time.sleep(0.01)
+         self.pinOnOff([4, 17])
+         time.sleep(0.01)
+         self.pinOnOff([15, 18])
+         time.sleep(0.01)
+         self.pinOnOff([4, 17])
+         time.sleep(0.01)        
+         actualTicks -= 1
+         while actualTicks>0:
+             self.pinOnOff([15, 18])
+             time.sleep(0.01)
+             self.pinOnOff([4, 17])
+             time.sleep(0.01)
+             self.pinOnOff([15, 18])
+             time.sleep(0.01)
+             self.pinOnOff([4, 17])
+             time.sleep(0.01)        
+             if scansteps%8==0:
+               scanarray[scancounter]=self.VoltagetoDistance(1)
+               scancounter+=1
+             scansteps -=1
+             if ticker%2==0:
+                self.setFIODrive(4,1)
+             else:
+                self.setFIODrive(4,0)
+                drivecounter+=1
+             ticker+=1
+    distancetraveled = (drivecounter-4)/6
+    return scanarray, distancetraveled
+        
+            
   def irMotor(self, angle = 0, Direction = "Left"):
     stepAngle = 360/4096*8;
     if Direction == "Left":
