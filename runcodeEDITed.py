@@ -19,7 +19,7 @@ class piRobot():
       gpio.setup(i, gpio.OUT)
     self.pinStates = np.zeros(28)
     self.irangle = 0 ###This is the angle IR sensor is facing
-    self.destination = [0,0] ###(x,y) coordinate as the robot is going to move to
+    self.destination = np.array([0,0]) ###(x,y) coordinate as the robot is going to move to
     self.heading = 0 ###the direction the car is driving relative to +x-axis; -is to the left, +is to the right
     self.labjack = u3.U3()
     self.labjack.configU3()    
@@ -31,7 +31,13 @@ class piRobot():
     #self.event_thread = threading.Thread(target=self.event_loop)
     #self.event_queue = queue.Queue() #defines the Queue variable
   
-  
+  """
+  getDsitance
+  """
+  def getDistance(self):
+    sqr = self.destination * self.destination;
+    return (np.sum(sqr))**(1/2);
+
   """
   Casual setting functions
   """
@@ -227,14 +233,18 @@ class piRobot():
   def TurnToDest(self):
     tantheta = self.destination[1]/self.destination[0];
     theta = -np.arctan(tantheta) * 180/np.pi; ###here is minus because positive value of arctan is to the left of the +x-axis, so now, we make it negative, so it is represented in our sense
-    turnangle = theta - self.heading); ### here the minus sign represents we are finding the distance from dest to where we are right now
+    turnangle = theta - self.heading; ### here the minus sign represents we are finding the distance from dest to where we are right now
     direction = "Left";
     if turnangle > 0:
         direction = "Right";
     self.TurnInPlace(abs(turnangle), direciton); ###TurnInPlace updates the head angle       
-        
   
   
+  """
+  irMotor:
+    input: (angle) to turn the ir motor and (direction) to turn
+    Turn the motor in the direction for the given angle and then update the self.irangle
+  """      
   def irMotor(self, angle = 0, Direction = "Left"):
     stepAngle = 360/4096*8;
     if Direction == "Left":
@@ -336,11 +346,11 @@ class piRobot():
   def VoltagetoDistance(self, n=0):
       Voltage = self.getAIN(n)
       if Voltage <=0.46:
-          return 100
+          return 100, Voltage
       x = np.log((Voltage-0.46)/3.67)/(-0.068)
       if x>50:
           x = 100
-      return x        
+      return x, Voltage        
   
   """
   TurntoAngle
@@ -362,17 +372,58 @@ class piRobot():
     return an array of scan
     slicing the entire front space of 180 degree to 18 pieces
     scan each piece and determine the distance to the obstacles, return all the distance in an array
+    ****subfunction Mode and IRValMode
+        since the IR sensor is not always working well, 
+        so i used the (mode) to sort out the most abundant ones, 
+        then average over all the voltage, 
+        then convert the average voltage to distance
+        this works good enough for it always returns the real distance +/- 2.5cm
   """        
-          
+      
+  def mode(self, array, error):
+    counter = 0;
+    maxv = -100;
+    maxI = -1;
+    for i in range(len(array)):
+      counter = 0;
+      for j in range(len(array)):
+        if j!=i and abs(array[i] - array[j])<=error:
+          counter = counter + 1;
+        if maxv < counter:
+          maxv = counter;
+          maxI = i;
+    return array[maxI];
+  
+  def IRValMode(self, ain = 0, slp = 30):
+    temp = 0;
+    tempArray = np.zeros(slp);
+    tempsum = 0;
+    data = 0;
+    counter = 0;
+    for j in range(slp):
+      time.sleep(0.01);
+      temp, tempArray[j] = self.VoltagetoDistance(ain);
+    data = self.mode(tempArray, 0.04);
+    for j in range(slp):
+      if abs(data-tempArray[j]) <=0.04:
+        tempsum = tempsum + tempArray[j];
+        counter = counter + 1;
+    data = tempsum/counter;
+    if data < 0.46:
+      return 100;
+    data = np.log((data-0.46)/3.67)/(-0.068)  
+    if data > 50:
+      data = 100;
+    return data;
+
   def ScopeScan(self):
     angle_increment = 10
-    num_steps = 180//angle_increment 
-    ir_data = np.zeros(num_steps)
+    num_steps = 180//angle_increment; 
+    ir_data = np.zeros(num_steps);
+    ir_vol = np.zeros(num_steps);
     self.TurntoAngle(-90)
     for i in range(num_steps):
-        time.sleep(0.1)
-        ir_data[i] = self.VoltagetoDistance(1)
-        self.update_irangle(self.irangle + angle_increment)
+        ir_data[i] = self.IRValMode(1);
         self.irMotor(angle_increment, "Right")
     self.TurntoAngle(0);
     print(ir_data);
@@ -383,17 +434,54 @@ class piRobot():
 
 
 
+  """
+  sensor_loop:
+    the main loop that will run the car to the destination set by destination(x,y);
+    !!!!always should end here
+    this starts by turning to the direction of the end point
+  """
 
-
-
-
-
-
-
-
-
-
-
-
-
-          
+  def sensor_loop(self):
+    front_min = 40 # cm Minimum values telling the car when to stop
+    self.TurnToDest();
+    while self.WALK(): ###true when the car is not within 5cm radius of the end point
+        front_dist = self.IRValMode(0,5) #scan the front 
+        print(front_dist)
+        if front_dist >= front_min or front_dist >= self.getDistance(): #if we still have space drive forward or if the destination is close enough
+            self.event_queue.put("Drive", 1) #passes drive to the queue loop, see the queue loop for more detail. This doesnt work yet, I am just including it in case we can get it to work.
+            self.DriveMotorCM(1, "Forward") #Drive the motor one step
+            print("vroom vroom") #I think this is a funny way to tell us what it is doing.
+            time.sleep(0.05) #This sleeps the code to give the motor time to do its thing. If it doesnt sleep it will make a massive queue of drives, so when the stop command comes its so late that the robot will just crash lol
+        else: #front sensor isnt happy anymore. Passes to next layer of decision making.
+            #diag_right_dist = VoltagetoDistance(2) #These would be the AIN readings from the left and right sensons once mounted, respectively
+            #diag_left_dist = VoltagetoDistance(3)
+            diag_left_dist = 10 #I have these set arbitrarily to always trigger the next loop where the scanner decides
+            diag_right_dist = 10
+            
+            self.event_queue.put("Stop", 1) #Obviously still doesnt do anything. 
+            
+            array_data = self.ScopeScan() 
+            decision_array = [array_data[9],array_data[8],array_data[10],array_data[7],array_data[11],array_data[6],array_data[12],array_data[5],array_data[13], array_data[4], array_data[14], array_data[3], array_data[15],array_data[2], array_data[16], array_data[1], array_data[17], array_data[0]] #This will take the IR data and list it in a way that goes center, then direcetly to the right of center, directly to the left, second from the right and so on. This allows the robot to pick the most optimal path
+            for i, dist in enumerate(decision_array):
+                if 100 <= dist:
+                    if i % 2 == 0: #This modulo is essentially saying right or left. All odd arrays correspond to right turns, all even correspond to left turns
+                        print(f"Turning to angle {(((i+2)//2)*(-1)**i) * 10 + 5} degrees...") #This tells the angle of the turn, measured from centerline. Negative values correspond to left turns
+                        angle = (((i+2)//2)*(-1)**i) * 10 + 5
+                        #self.event_queue.put("AngleTurn", angle) #I want to pass both a queue event and a variable to an event queue, but it doesnt work just yet.
+                         #This will stop the scanning queue, allowing a different loop to take over
+                        i+=1
+                        return self.avoid_loop_better(angle, front_dist)
+                    else: #same as above but for the other direction
+                        print(f"Turning to angle {(((i+2)//2)*(-1)**i) * 10 - 5} degrees...")
+                        angle = (((i+2)//2)*(-1)**i) * 10 - 5
+                        #self.event_queue.put("AngleTurn", angle)
+                        i+=1
+                        return self.avoid_loop_better(angle, front_dist)
+                elif i+1 == len(decision_array): #I havent coded this yet, but this is the option for going backwards cause the robot messed up
+                    print("didn't find acceptable range before middle of array, turn around")
+                    DriveMotor(100, "Backward")
+                    break
+                
+                
+                
+                
