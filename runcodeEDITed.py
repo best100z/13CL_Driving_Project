@@ -82,9 +82,10 @@ class piRobot():
   def irMotor(self, angle = 0, Direction = "Left"):
     stepAngle = 360/4096*8;
     if Direction == "Left":
-        self.update_irangle(self.irangle-angle)  
+        self.update_irangle(self.irangle-angle)
     if Direction == "Right":
-        self.update_irangle(self.irangle+angle)  
+        self.update_irangle(self.irangle+angle)
+    print("ir to", self.irangle);  
     actualTicks = angle/stepAngle;
     if Direction == "Left":
         self.pinOnOff([4, 15])
@@ -155,7 +156,8 @@ class piRobot():
     if Direction == "Left":
         self.update_angle(self.angle-angle)  
     if Direction == "Right":                                   
-        self.update_angle(self.angle+angle)  
+        self.update_angle(self.angle+angle)
+    print("front motor to", self.angle);
     if self.angle > 65:
         self.UhOh()
         print("Too Many Degrees Dont Break the Car")
@@ -211,7 +213,7 @@ class piRobot():
     for i in [9, 25, 11, 8]:
       if self.pinStates[i] == 1:
         self.pinOnOff([i])
-        
+      
         
   '''
     #This cluster of Code is for the (Back Wheel) to turn
@@ -238,20 +240,20 @@ class piRobot():
         self.setFIODrive(4,1)
         time.sleep(0.05)
         self.setFIODrive(4, 0)
-        time.sleep(0.05)  
+        time.sleep(0.05);
   
-  def DriveMotorCM(self, cm = 0, Direction = "Forward"):
+  def DriveMotorCM(self, cm = 0, Direction = "Forward", boolean = True):
     steps = int(6*cm)
     self.DriveMotor(steps, Direction)
-    xmovement =  np.cos(self.heading)*cm
-    ymovement = np.sin(self.heading)*cm
-    self.update_destination(self.destination[0]-xmovement, self.destination[1]-ymovement)        
+    xmovement =  np.cos(-self.heading)*cm
+    ymovement = np.sin(-self.heading)*cm
+    if boolean:
+      self.update_destination(self.destination[0]-xmovement, self.destination[1] - ymovement)
+    print("destination is", self.destination);        
     actualtravel = steps/6;
     return actualtravel;
   
 
-  
-  
   '''
     TurnInPlace: (Turning)
       input: the (angle) of turning and to which (direction)
@@ -259,24 +261,26 @@ class piRobot():
               ***this has an error of -2.5 ~ 0, always might be slightly less
   '''
   
-  def TurnInPlace(self, angle=0, Direction="Right"):
+  def TurnInPlace(self, angle=0, Direction="Right", boolean = False):
+    if abs(angle) <= 3:
+      return 0;
     distance = ((angle/2)*np.pi/180)*45
     self.TurnMotor(65, Direction)
-    actualtravel = self.DriveMotorCM(distance, "Forward");
+    actualtravel = self.DriveMotorCM(distance, "Forward", boolean);
     actualangle=((actualtravel/45)*2)*180/np.pi
-    print(actualtravel);
     if Direction == "Right":
       self.heading += actualangle
       self.TurnMotor(130, "Left")
     else:
       self.heading -= actualangle
       self.TurnMotor(130, "Right")
-    self.DriveMotorCM(distance, "Backward")
+    print("heading toward", self.heading);
+    self.DriveMotorCM(distance, "Backward", boolean)
     if Direction == "Right":
       self.TurnMotor(65, "Right")
     else:
       self.TurnMotor(65, "Left")
-    return actualangle  
+    return actualangle
         
   
   """
@@ -306,7 +310,7 @@ class piRobot():
         direction = "Right";
     if abs(turnangle) <3:
         return;
-    self.TurnInPlace(abs(turnangle)); ###TurnInPlace updates the head angle       
+    self.TurnInPlace(abs(turnangle), direction); ###TurnInPlace updates the head angle       
   
   '''
   irToDest:
@@ -494,7 +498,7 @@ class piRobot():
     irdata = self.ScopeScan(towards);
     minI = -1000;
     for i in range(len(irdata)-1):
-      if i!=9 and i+1!=9 and i-1!=9 :
+      if towards !=0 or (i!=9 and i+1!=9 and i-1!=9):
         if irdata[i]>=tolorance and irdata[i+1]>=tolorance:
           if abs(minI-9) > abs(i + 1 -9):
             minI = i + 1;
@@ -513,6 +517,7 @@ class piRobot():
   '''
 
   def sensor_loop(self):
+    print("sensor_loop");
     front_min = self.sensorloopTolorance; # cm Minimum values telling the car when to stop
     self.TurnToDest(); ### always trying to move in a straight line to the destination
     temp = 0;
@@ -537,6 +542,7 @@ class piRobot():
   """
   """        
   def avoid_loop_better(self, dist):
+    print("avoid_loop");
     angle = (self.FindMinimumAngle(self.HeadingtoDest())) + self.HeadingtoDest(); #This tells the angle of the turn, measured from centerline. Negative values correspond to left turns
     i = 0;
     front_min = 20;
@@ -546,7 +552,7 @@ class piRobot():
       self.TurnInPlace(abs(angle) + 10, "Right")
     elif angle < 0:
       self.TurnInPlace(abs(angle) + 10, "Left")
-    while i*np.cos(angle/180*np.pi) < dist:
+    while i*np.cos(angle/180*np.pi) < dist + 20:
       front_dist, temp = self.VoltagetoDistance(0)
       if front_dist >= front_min: 
         self.DriveMotorCM(1, "Forward")
@@ -558,9 +564,16 @@ class piRobot():
           i += 1;
         else:
           return self.avoid_loop_better(front_dist);
-    self.TurnToDest();
+    angle = self.HeadingtoDest();
+    angle = self.FindMinimumAngle(angle) + angle;
+    direction = "Right";
+    if angle<= 0:
+      direction = "Left";
+    self.TurnInPlace(abs(angle), direction);
     front_dist = self.IRValMode(0);
-    if front_dist >= self.sensorloopTolorance or self.Reachable(front_dist):
+    if self.Reachable(front_dist):
+      return self.sensor_loop();
+    elif abs(self.HeadingtoDest())<=3 and front_dist >= self.sensorloopTolorance:
       return self.sensor_loop();
     return self.avoid_loop_better(front_dist);
           
@@ -568,7 +581,11 @@ class piRobot():
           
 
 p = piRobot();
-p.update_destination(170, 0);
-time.sleep(5);
+p.update_destination(150, 0);
+time.sleep(10);
 print("go");
 p.sensor_loop();
+
+
+
+
