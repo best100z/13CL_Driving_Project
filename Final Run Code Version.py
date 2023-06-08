@@ -64,7 +64,7 @@ class piRobot():
         self.pinStates[number]=0
   
   """
-  @3: Turning Motors
+  @2: Turning Motors
   """
   
   '''
@@ -262,7 +262,7 @@ class piRobot():
         
   
   """
-  @4: Pathfinding Towards the Destination
+  @3: Pathfinding Towards the Destination
   """
   
   '''
@@ -303,7 +303,7 @@ class piRobot():
     
 
   """
-  @5: Reset
+  @4: Reset
   """
 
   '''
@@ -325,7 +325,7 @@ class piRobot():
       self.TurnMotor(-self.angle)
       
   """
-  @6: scanning
+  @5: scanning
   """
   
   def getAIN(self, n=0): #again, this is labjact specific code
@@ -426,7 +426,7 @@ class piRobot():
     return ir_data         
   
   """
-  @7: Logic and loops
+  @6: Logic and loops
   """
 
   '''
@@ -612,6 +612,7 @@ class piRobot():
         
 
 """
+    DriveToDest:
     Code used to minimize error:
     We start our runs by defining a coordinate system with the car at the origin and the destination on the positive x axis
     As the car drives, the car moves along this grid as it avoids obstacles. We found that often the car was extremely
