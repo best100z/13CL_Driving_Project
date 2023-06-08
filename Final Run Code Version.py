@@ -24,14 +24,8 @@ class piRobot():
     self.labjack = u3.U3()
     self.labjack.configU3()    
     self.angle = 0  ###angle for the front wheel, it only turns to 65 degree to either left or right; act as a protection and as a reminder when forget to return the front wheel to orignial position
-    self.fineslice = 10; ###this is how fine do we want to slice the 180degree scan to be;
-    self.sensorloopTolorance = 30;
-    """
-    skeptical if we need to keep it
-    """
-    #self.sensor_thread = threading.Thread(target=self.sensor_loop)
-    #self.event_thread = threading.Thread(target=self.event_loop)
-    #self.event_queue = queue.Queue() #defines the Queue variable
+    self.fineslice = 10; ###this is how fine do we want one slice of the 180degree ScopeScan() to be;
+    self.sensorloopTolorance = 30; ### How close we are okay with the car getting to obstacles
   
   """
   @1: Casual setting functions
@@ -70,7 +64,7 @@ class piRobot():
         self.pinStates[number]=0
   
   """
-  @2: Turning Motors
+  @3: Turning Motors
   """
   
   '''
@@ -130,8 +124,8 @@ class piRobot():
 
   '''
     TurntoAngle
-      input: angle: positive to the right, negative to the left
-      detail: make the scanning ir sensor pointing to the angle
+      input: angle: positive to the right, negative to the left, measured from centerline of the car.
+      detail: make the scanning ir sensor turn to the angle
   '''
         
   def TurntoAngle(self,angle): #This code turns the scope to a specific angle relative to the car
@@ -207,6 +201,7 @@ class piRobot():
       input # of steps, direction
       detail: drive the back motor by number of steps
       #This is really only used for DriveMotorCM
+      #Note, this calls the Labjack we used for this project. For future iterations, this should be converted to raspberry pi code. 
   
     DriveMotorCM:
       input cm: distance in cm; direction
@@ -244,8 +239,9 @@ class piRobot():
 
   '''
     TurnInPlace: (Turning)
-      input: the (angle) of turning and to which (direction)
-      detail: turn towards direction certain angles;
+      input: the (angle) of turning, measured in the standard way for this project.
+      detail: Performs a two part turn, going forwards then backwards, leaving the car in the same position it iniated heading towards the input angle. 
+      Updates the heading;
               ***this has an error of -2.5 ~ 0, always might be slightly less
   '''
   
@@ -266,7 +262,7 @@ class piRobot():
         
   
   """
-  @3: Towards the destination
+  @4: Pathfinding Towards the Destination
   """
   
   '''
@@ -307,7 +303,7 @@ class piRobot():
     
 
   """
-  @4: Reset
+  @5: Reset
   """
 
   '''
@@ -329,10 +325,10 @@ class piRobot():
       self.TurnMotor(-self.angle)
       
   """
-  @5: scanning
+  @6: scanning
   """
   
-  def getAIN(self, n=0):
+  def getAIN(self, n=0): #again, this is labjact specific code
       ain0bits, = self.labjack.getFeedback(u3.AIN(n));
       ainValue = self.labjack.binaryToCalibratedAnalogVoltage(ain0bits, isLowVoltage=False, channelNumber = 0);
       return ainValue
@@ -342,7 +338,9 @@ class piRobot():
       input: n = 0 --> the front IR sensor
              n = 1 --> the scanning IR sensor
       detail: this function let us know the distance in CM detected by either sensor
-              if either the voltage getting in is too small or the distance is greater than 50cm then return 100 stand for invalid
+              if either the voltage getting in is too small or the distance is greater than 50cm then return 100 stand for invalid.
+              We included these due to the physical limitations of our IR sensors. Also, the function comes from our experimental fits, 
+              it may vary depending on type of IR sensor. 
   '''
   def VoltagetoDistance(self, n=0):
       Voltage = self.getAIN(n)
@@ -355,7 +353,7 @@ class piRobot():
   
           
   '''
-    #This cluster of codes is to scan the 180 degree:
+    #This cluster of code provides the scanning funcationality of our car:
     mode:
       input: an array of value and the tolorance for error;
       output: the value that has the most occurence within the error;
@@ -365,14 +363,14 @@ class piRobot():
       detail: scan and sleep 0.01s for slp times;
               find the mode;
               return the average of all within the mode
-    ScopeSCan:
+    ScopeScan:
       return an array of scan
-      detail: slicing the entire front space of 180 degree to 18 pieces centered on towards, which is the direction relative the heading
+      detail: slicing the entire front space of 180 degree to 18 pieces centered on an angle (towards), which is the direction relative the heading
               scan each piece and determine the distance to the obstacles,
               return all the distance in an array
       ****subfunction Mode and IRValMode
-        since the IR sensor is not always working well, 
-        so i used the (mode) to sort out the most abundant ones, 
+        since the IR sensor is very susceptible to small voltage changes, 
+        this code uses the (mode) to sort out the most abundant ones, 
         then average over all the voltage, 
         then convert the average voltage to distance
         this works good enough for it always returns the real distance +/- 2.5cm
@@ -428,7 +426,7 @@ class piRobot():
     return ir_data         
   
   """
-  @4: Logic and loops
+  @7: Logic and loops
   """
 
   '''
@@ -497,7 +495,7 @@ class piRobot():
         if right_index < len(ir_data) and ir_data[right_index] >= 100:
             return -10 * i + towards
 
-    return None  # No okay value found
+    return self.escape_loop(self)
     
   '''
     sensor_loop:
@@ -520,23 +518,31 @@ class piRobot():
         print(front_dist)
         if front_dist >= front_min or self.Reachable(front_dist): ###if we still have space drive forward or if the destination is close enough
           self.DriveMotorCM(1, "Forward") ###Drive forward 1cm;
-          print("vroom vroom") ###I think this is a funny way to tell us what it is doing.
-          ###skeptical if I need to delete this
-          time.sleep(0.05) ###This sleeps the code to give the motor time to do its thing. If it doesnt sleep it will make a massive queue of drives, so when the stop command comes its so late that the robot will just crash lol
+          print("vroom vroom") ###I think this is a funny way to tell us what it is doing, helpful for debugging.
+          time.sleep(0.05) ###This sleeps the code to give the motor time to do its thing
         else: ###check again to make sure it is not the IR sensor giving us trouble
           front_dist = self.IRValMode(0);
           if front_dist >= front_min or self.Reachable(front_dist): ###if it is just the sensor is giving us trouble, then still marching forward
             self.DriveMotorCM(1, "Forward") ###Drive forward 1cm;
-            print("vroom vroom") ###I think this is a funny way to tell us what it is doing.
-            ###skeptical if I need to delete this
-            time.sleep(0.05) ###This sleeps the code to give the motor time to do its thing. If it doesnt sleep it will make a massive queue of drives, so when the stop command comes its so late that the robot will just crash lol
+            print("vroom vroom") 
+            time.sleep(0.05)  
           else: #front sensor isnt happy anymore. Passes to next layer of decision making.
             front_dist = front_dist - 10;
             return self.avoid_loop_better(front_dist);
   """
+    avoid_loop_better:
+      Allows the car to navigate around an obstacle. Passed the distance to said obstacle. 
+      1. Uses ScopeScan to create an array of its surroundigs, and return the first clear angle closest to the destination.
+      2. Turns to that angle plus a few degrees to guarantee the car passes
+      3. Drives the distance required to pass that obstacle
+      4. Turns IR sensor to look in direction of the destination --> If clear, passes DriveToDest
+      5. Creates a scan centered on the destination 
+      6. Checks again to make sure the direct path is clear --> If clear, passes DriveToDest
+      7. Otherwise, will pick the closest clear path, and returns sensor loop to keep car going until it runs into another obstacle. 
   """        
+ 
   def avoid_loop_better(self, dist):
-    print("avoid_loop");
+    print("avoid_loop"); #debugging
     angle = (self.FindMinimumAngle(self.HeadingtoDest())) + self.heading; #This tells the angle of the turn, measured from centerline. Negative values correspond to left turns
     i = 0;
     front_min = 20;
@@ -546,36 +552,77 @@ class piRobot():
       self.TurnInPlace(abs(angle) + 20)
     elif angle < 0:
       self.TurnInPlace(angle - 20)
-    while i*np.cos(angle/180*np.pi) < 70:
-      front_dist, temp = self.VoltagetoDistance(0)
-      if front_dist >= front_min: 
+    while i*np.cos(angle/180*np.pi) < dist: #Drive the car far enough to pass the distance to the obstacle
+      front_dist, temp = self.VoltagetoDistance(0) #Keep scanning as it drives towards the obstacle
+      if front_dist >= front_min: #If okay, keep going
         self.DriveMotorCM(1, "Forward")
         i += 1;
-      else:
+      else: #If not okay, first ceck again 
         front_dist = self.IRValMode(0);
         if front_dist >= front_min:
           self.DriveMotorCM(1, "Forward");
           i += 1;
-        else:
+        else: #If for sure bad, try another avoid loop with the full scan
           return self.avoid_loop_better(front_dist);
-    self.TurntoAngle(0)
-    return self.DriveToDest(self.destination)
-    #goAngle = self.HeadingtoDest()
-    #self.TurntoAngle(goAngle)
-    #front_dist = self.IRValMode(1)
-    #if front_dist >= 100:
-     #   self.TurntoAngle(0)
-      #  return self.DriveToDest(self.destination)
-    #else:
-    #    angle = self.FindMinimumAngle(self.HeadingtoDest());
-     #   self.TurnInPlace(angle);
-      #  front_dist = self.IRValMode(0);
-       # if self.Reachable(front_dist):
-       #     return self.DriveToDest(self.destination)
-       # elif abs(self.HeadingtoDest())<=3 and front_dist >= self.sensorloopTolorance:
-       #   return self.DriveToDest(self.destination);
-       # return self.DriveToDest(self.destination);
+    goAngle = self.HeadingtoDest() #Find the heading to the destination relative to the cars new position
+    self.TurntoAngle(goAngle) #Turn scope to look at destination
+    front_dist = self.IRValMode(1)
+    if front_dist >= 100: #If path is clear, reset the scope and call DriveToDest
+        self.TurntoAngle(0)
+        return self.DriveToDest(self.destination)
+    else: #Scan the environment
+        angle = self.FindMinimumAngle(self.HeadingtoDest());
+        self.TurnInPlace(angle);
+        front_dist = self.IRValMode(0);
+        if self.Reachable(front_dist): #If it is okay, drive to the closest angle to the destination
+            self.TurnInPlace(angle)
+            return self.sensor_loop()
+        elif abs(self.HeadingtoDest())<=3 and front_dist >= self.sensorloopTolorance:
+          self.DriveToDest(self.destination) #If the car is pretty much pointed at it drive to the destination
+          return self.sensor_loop()
+        return self.avoid_loop_better(self.VoltagetoDistance(0)) #Otherwise just try again
+    
+    
+'''
+    escape_loop:
+    Called when a scope scan returns no acceptable values, meaning that car is surrounded on all sides. 
+    Used to hopefully escape said situations, although relies on luck.
+    1. If stuck, turn the scope 90 degrees left, a direciton chosen arbitrarily
+    2. Reverse until the scope reads it is clear --> If it crashes here, I'm not sure how to adress the situation without either another IR sensor on the back, 
+    or wireless tech to know if it crashed. This is achievable, but not in the state of the project as of 6/7/23'
+    3. Once clear, drive a foot to the left, or until you run into another obstacle
+    4. Turn to face the destination and head off.
 
+'''
+
+  def escape_loop(self):
+    self.TurntoAngle(-90) #Arbitrarily choose to look directly left.
+    side_dist = self.VoltagetoDistance(1)
+    while side_dist <=100: #Reverse until there is a clear path to the left
+        side_dist, temp = self.VoltagetoDistance(1);  
+        self.DriveMotorCM(1, "Backwards")
+    self.TurnInPlace(-90)
+    self.reset()
+    i = 0
+    front_dist = self.VoltagetoDistance(1)
+    while i<30 and front_dist>= 100:
+        self.DriveMotorCM(1, "Forward")
+        i += 1
+    return self.DriveToDest(self.destination)
+        
+
+"""
+    Code used to minimize error:
+    We start our runs by defining a coordinate system with the car at the origin and the destination on the positive x axis
+    As the car drives, the car moves along this grid as it avoids obstacles. We found that often the car was extremely
+    effective at avoiding the first obstacle, but would get extremely confused at subsequent ones. Our solution 
+    was to redefine the coordinate system after each obstacle. 
+    1. The code registers the cars current position and heading
+    2. The car then turns to the destination
+    3. the car measures the distance to the destination
+    4. the car updates the destination so that it is now at (distance, 0), resetting the positive x axis
+    5. the car resets its heading, then calls sensor loop
+"""
   def DriveToDest(self, args):
     x,y = args
     self.update_destination(x,y)
