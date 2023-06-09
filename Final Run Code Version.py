@@ -290,7 +290,7 @@ class piRobot():
     print(turnangle)
     if abs(turnangle) < 3:
         return
-    self.TurnInPlace(turnangle); ###TurnInPlace updates the head angle       
+    self.TurnInPlace(turnangle) ###TurnInPlace updates the head angle       
   
   '''
   irToDest:
@@ -298,7 +298,7 @@ class piRobot():
       Updates the ir angle
   '''
   def irToDest(self):
-    headangle = self.HeadingtoDest();
+    headangle = self.HeadingtoDest()
     self.TurntoAngle(headangle)
     
 
