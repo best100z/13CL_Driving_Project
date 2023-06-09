@@ -66,6 +66,7 @@ class piRobot():
   
   """
   @2: Turning Motors
+      Check Turning_and_Driving_Detailed.py for more detailed comments
   """
   
   '''
@@ -264,6 +265,7 @@ class piRobot():
   
   """
   @3: Pathfinding Towards the Destination
+      Check Pathfinding_and_Scanning_Detailed.py for more details
   """
   
   '''
@@ -304,6 +306,7 @@ class piRobot():
 
   """
   @4: Reset
+      Check Pathfinding_and_Scanning_Detailed.py for more details
   """
 
   '''
@@ -326,6 +329,7 @@ class piRobot():
       
   """
   @5: scanning
+      Check Pathfinding_and_Scanning_Detailed.py for more details
   """
   
   def getAIN(self, n=0): #again, this is labjact specific code
@@ -426,6 +430,7 @@ class piRobot():
   
   """
   @6: Logic and loops
+      Check Logic_Detailed.py for more details
   """
 
   '''
@@ -440,7 +445,7 @@ class piRobot():
     return yes
   
   '''
-    Reacable:
+    Reachable:
       input: distance theoretically will travel
       output: boolean if within the steps the car will reach within the 5cm radius of the end point
       detail: each time just theoretically move 1 cm forward, and use WALK to check if still need to walk
