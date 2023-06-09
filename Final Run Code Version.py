@@ -77,7 +77,7 @@ class piRobot():
   def irMotor(self, angle = 0):
     stepAngle = 360/4096*8
     self.update_irangle(self.irangle+angle)
-    print("ir to", self.irangle); 
+    print("ir to", self.irangle)
     actualTicks = abs(angle)/stepAngle
     if angle >= 0:
         self.pinOnOff([4, 15])
@@ -149,7 +149,7 @@ class piRobot():
         print("Too Many Degrees Dont Break the Car")
         self.update_angle(self.angle-angle)
         return
-    stepAngle = 360/4096*8;
+    stepAngle = 360/4096*8
     actualTicks = abs(angle)/stepAngle
     if angle >= 0:
         self.pinOnOff([9, 25])
