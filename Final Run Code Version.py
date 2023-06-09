@@ -8,30 +8,53 @@ import queue
 
 
 """
-Define everything in a class for ease of storing state variables
-Check Detailed_Class_Code.py for more detail
+@1: Define everything in a class for ease of storing state variables
 """
 
 class piRobot():
   def __init__(self):
+    #Sets the numbering scheme for the Raspberry Pi pinouts to the number scheme for just the ones labelled GPIO 0-27 - see diagrams
+    #The other option is gpio.BOARD, which numbers every pin 1-40
     gpio.setmode(gpio.BCM)
+    
+    #This line prevents the RPi from giving a warning every time the code is run more than once without restarting
+    #It can be removed with no issue
     gpio.setwarnings(False)
+    
+    #This loop sets every GPIO pin on the RPi to a digital in/out pin
     for i in range(28):
       gpio.setup(i, gpio.OUT)
+      
+    #This state variable stores whether each GPIO pin is set to Off (0) or On (1)
     self.pinStates = np.zeros(28)
+    
+    #This state variable stores the direction the pivoting IR sensor is facing relative to the car
+    #A value of 0 is straight ahead, positive is left, and negative is right
     self.irangle = 0 
-    self.destination = np.array([0,0]) 
+    
+    #This variable stores the destination that the car is moving towards
+    #This variable is updated every time the car moves
+    self.destination = np.array([0,0])
+    
+    #This stores the direction that the car is moving in, relative to the x-axis as defined by the destination
+    #Sign conventions are the same as the IR sensor
     self.heading = 0 
+    
+    #These lines initialize the Labjack
     self.labjack = u3.U3()
     self.labjack.configU3()    
+    
+    #This stores angle for the steering column, it only turns to 65 degree to either left or right; 
+    #Acts as a protection and as a reminder if you forget to return the front wheel to orignial position
     self.angle = 0
-    self.scanslice = 10 
+    
+    #This is the angle we want one slice of the 180degree ScopeScan() to be;
+    self.scanslice = 10
+    
+    #This is the distance at which the avoid loop will trigger
     self.sensorloopTolerance = 30 
   
-  """
-  @1: Casual setting functions
-  """
-  
+  #All of the below functions will just update the state variables stored in the class
   def update_angle(self, angle):
     self.angle = angle
       
@@ -44,17 +67,18 @@ class piRobot():
   def update_heading(self, angle):
     self.heading = angle
   
-  def update_scanslice(self, angle):
-    self.scanslice = angle
+  def update_fineslice(self, angle):
+    self.fineslice = angle
   
   def update_sensorloopTolerance(self, dis):
     self.sensorloopTolerance = dis
 
   '''
     pinOnOff:
-      Input: An array of pins
+      input: array of pins
       Detail: Changes the state of every pin in the array
   '''
+  
   def pinOnOff(self, numbers):
     for number in numbers:
       if self.pinStates[number]==0:
@@ -66,371 +90,494 @@ class piRobot():
   
   """
   @2: Turning Motors
-      Check Turning_and_Driving_Detailed.py for more detailed comments
   """
   
   '''
-    irMotor:
-      Input: (angle) to turn the ir motor and (direction) to turn
-      Detail: Turn the motor in the direction for the given angle
-              update the self.irangle
-  '''      
-  def irMotor(self, angle = 0):
-    stepAngle = 360/4096*8
-    self.update_irangle(self.irangle+angle)
-    print("ir to", self.irangle)
-    actualTicks = abs(angle)/stepAngle
-    if angle >= 0:
-        self.pinOnOff([4, 15])
-        time.sleep(0.01)
-        self.pinOnOff([4, 17])
-        time.sleep(0.01)
-        self.pinOnOff([15, 18])
-        time.sleep(0.01)
-        self.pinOnOff([4, 17])
-        time.sleep(0.01);       
-        actualTicks = actualTicks - 1
-        while actualTicks>0.5:
-            self.pinOnOff([15, 18])
-            time.sleep(0.01)
-            self.pinOnOff([4, 17])
-            time.sleep(0.01)
-            self.pinOnOff([15, 18])
-            time.sleep(0.01)
-            self.pinOnOff([4, 17])
-            time.sleep(0.01)      
-            actualTicks = actualTicks - 1
-    if angle <= 0:
-        self.pinOnOff([4, 18])
-        time.sleep(0.01)
-        self.pinOnOff([4, 17])
-        time.sleep(0.01)
-        self.pinOnOff([15, 18])
-        time.sleep(0.01)
-        self.pinOnOff([4, 17])
-        time.sleep(0.01)       
-        actualTicks = actualTicks - 1
-        while actualTicks>0.5:
-            self.pinOnOff([15, 18])
-            time.sleep(0.01)
-            self.pinOnOff([4, 17])
-            time.sleep(0.01)
-            self.pinOnOff([15, 18])
-            time.sleep(0.01)
-            self.pinOnOff([4, 17])
-            time.sleep(0.01)         
-            actualTicks = actualTicks - 1
-    for i in [4, 15, 17, 18]:
-      if self.pinStates[i] == 1:
-        self.pinOnOff([i])  
+  irMotor:
+    Input: (angle) to turn the ir motor and (direction) to turn
+    Detail: Turn the motor in the direction for the given angle
+            update the self.irangle
+'''
 
-  '''
-    TurntoAngle
-      input: angle: positive to the right, negative to the left, measured from centerline of the car.
-      detail: make the scanning ir sensor turn to the angle
-  '''
-        
-  def TurntoAngle(self,angle): #This code turns the scope to a specific angle relative to the car
-      current_angle = self.irangle
-      final_dest = angle - current_angle
-      self.irMotor(final_dest)
+def irMotor(self, angle = 0):
+  #This is the angle of a single step on one of the stepper motors
+  stepAngle = 360/4096*8
+  
+  #Changes the state variable to match
+  self.update_irangle(self.irangle+angle)
+  
+  #Print is for debugging purposes
+  print("ir to", self.irangle)
+  
+  #Finding the number of steps needed
+  actualTicks = abs(angle)/stepAngle
+  
+  #These pinouts are detailed in the diagrams folder
+  if angle >= 0:
+      #The first step is different because GPIO pins 4 and 15 need to be on for the first step, but 4 is already on at the end
+      #So, the second step is different. This is the same for turning right instead of left.
+      #This also is the same case for the steering column motor
+      self.pinOnOff([4, 15])
+      time.sleep(0.01)
+      self.pinOnOff([4, 17])
+      time.sleep(0.01)
+      self.pinOnOff([15, 18])
+      time.sleep(0.01)
+      self.pinOnOff([4, 17])
+      time.sleep(0.01);       
+      actualTicks = actualTicks - 1
+      while actualTicks>0.5:
+          self.pinOnOff([15, 18])
+          time.sleep(0.01)
+          self.pinOnOff([4, 17])
+          time.sleep(0.01)
+          self.pinOnOff([15, 18])
+          time.sleep(0.01)
+          self.pinOnOff([4, 17])
+          time.sleep(0.01)      
+          actualTicks = actualTicks - 1
+  if angle <= 0:
+      self.pinOnOff([4, 18])
+      time.sleep(0.01)
+      self.pinOnOff([4, 17])
+      time.sleep(0.01)
+      self.pinOnOff([15, 18])
+      time.sleep(0.01)
+      self.pinOnOff([4, 17])
+      time.sleep(0.01)       
+      actualTicks = actualTicks - 1
+      while actualTicks>0.5:
+          self.pinOnOff([15, 18])
+          time.sleep(0.01)
+          self.pinOnOff([4, 17])
+          time.sleep(0.01)
+          self.pinOnOff([15, 18])
+          time.sleep(0.01)
+          self.pinOnOff([4, 17])
+          time.sleep(0.01)         
+          actualTicks = actualTicks - 1
           
-  
-  '''
-    TurnMotor(Front Wheel)
-      detail: this code is only used to turn the (front wheel) to either 65 degrees to the left or to the right
-      ***has protection for the angle so it doesn't break the front motor
-  '''
-  
-  def TurnMotor(self, angle = 0,):   
-    self.update_angle(self.angle+angle)  
-    print("front motor to", self.angle)
-    if abs(self.angle) > 65:
-        self.UhOh()
-        print("Too Many Degrees Dont Break the Car")
-        self.update_angle(self.angle-angle)
-        return
-    stepAngle = 360/4096*8
-    actualTicks = abs(angle)/stepAngle
-    if angle >= 0:
-        self.pinOnOff([9, 25])
-        time.sleep(0.01)
-        self.pinOnOff([9, 11])
-        time.sleep(0.01)
-        self.pinOnOff([25, 8])
-        time.sleep(0.01)
-        self.pinOnOff([9, 11])
-        time.sleep(0.01)
-        actualTicks = actualTicks - 1
-        while actualTicks>0:
-            self.pinOnOff([8, 25])
-            time.sleep(0.01)
-            self.pinOnOff([9, 11])
-            time.sleep(0.01)
-            self.pinOnOff([8, 25])
-            time.sleep(0.01)
-            self.pinOnOff([9, 11])
-            time.sleep(0.01)
-            actualTicks = actualTicks - 1
-    if angle < 0:
-        self.pinOnOff([9, 8])
-        time.sleep(0.01)
-        self.pinOnOff([9, 11])
-        time.sleep(0.01)
-        self.pinOnOff([25, 8])
-        time.sleep(0.01)
-        self.pinOnOff([9, 11])
-        time.sleep(0.01)       
-        actualTicks = actualTicks - 1
-        while actualTicks>0:
-            self.pinOnOff([25, 8])
-            time.sleep(0.01)
-            self.pinOnOff([9, 11])
-            time.sleep(0.01)
-            self.pinOnOff([25, 8])
-            time.sleep(0.01)
-            self.pinOnOff([9, 11])
-            time.sleep(0.01)         
-            actualTicks = actualTicks - 1
-    for i in [9, 25, 11, 8]:
-      if self.pinStates[i] == 1:
-        self.pinOnOff([i])
-      
-        
-  '''
-    #This cluster of Code is for the (Back Wheel) to turn
-    DriveMotor:
-      input # of steps, direction
-      detail: drive the back motor by number of steps
-      #This is really only used for DriveMotorCM
-      #Note, this calls the Labjack we used for this project. For future iterations, this should be converted to raspberry pi code. 
-  
-    DriveMotorCM:
-      input cm: distance in cm; direction
-      detail: drive the car certain cm either forward or backward
-      ***updates the distance to the destination 
-  '''
-  
-  def setFIODrive(self, channel, state): #Labjack specific
-    self.labjack.setDOState(channel, state)
-  
-  def DriveMotor(self, Steps = 0, Direction = "Forward"): 
-    if Direction == "Forward":
-        self.setFIODrive(5, 1)
-    if Direction == "Backward":
-        self.setFIODrive(5,0)
-    for i in range(Steps):
-        self.setFIODrive(4,1)
-        time.sleep(0.05)
-        self.setFIODrive(4, 0)
-        time.sleep(0.05)
-    self.setFIODrive(4,0)
-    self.setFIODrive(5,0)
-  
-  def DriveMotorCM(self, cm = 0, Direction = "Forward", boolean = True):
-    steps = int(6*cm)
-    self.DriveMotor(steps, Direction)
-    xmovement =  np.cos(self.heading*np.pi/180)*cm
-    ymovement = np.sin(self.heading*np.pi/180)*cm
-    if boolean:
-      self.update_destination(self.destination[0]-xmovement, self.destination[1] - ymovement)
-    print("destination is", self.destination)       
-    actualtravel = steps/6
-    return actualtravel
-  
+  #This block turns all pins off because remaining on could damage the motor
+  for i in [4, 15, 17, 18]:
+    if self.pinStates[i] == 1:
+      self.pinOnOff([i])  
 
-  '''
-    TurnInPlace: (Turning)
-      input: the (angle) of turning, measured in the standard way for this project.
-      detail: Performs a two part turn, going forwards then backwards, leaving the car in the same position it iniated heading towards the input angle. 
-      Updates the heading:
-              ***this has an error of -2.5 ~ 0, always might be slightly less
-  '''
+'''
+  TurntoAngle
+    input: angle: positive to the right, negative to the left, measured from centerline of the car.
+    detail: make the scanning ir sensor turn to the angle
+'''
+
+def TurntoAngle(self,angle): 
+    current_angle = self.irangle
+    
+    #Finding the turning angle needed
+    final_dest = angle - current_angle
+    
+    #Turns the ir sensor to the angle entered
+    self.irMotor(final_dest)
+
+
+'''
+  TurnMotor(Front Wheel)
+    detail: this code is only used to turn the (front wheel) to either 65 degrees to the left or to the right
+    ***has protection for the angle so it doesn't break the front motor
+'''
+
+def TurnMotor(self, angle = 0,):   
+  #Updates the state variable
+  self.update_angle(self.angle+angle)  
   
-  def TurnInPlace(self, angle=0,  boolean = False):
-    if abs(angle) <= 3:
-      return 0
-    distance = ((angle/2)*np.pi/180)*45
-    print(distance)
-    self.TurnMotor(65*angle/abs(angle))
-    actualtravel = self.DriveMotorCM(abs(distance), "Forward", boolean)
-    actualangle=((actualtravel/45)*2)*180/np.pi
-    self.heading += actualangle
-    self.TurnMotor(130*-1*angle/abs(angle))
-    print("heading toward", self.heading)
-    self.DriveMotorCM(abs(distance), "Backward", boolean)
-    self.TurnMotor(65*angle/abs(angle))
-    return actualangle
+  #print for debugging
+  print("front motor to", self.angle)
+  
+  #This block makes sure the steering column doesn't turn too far
+  if abs(self.angle) > 65:
+      self.UhOh()
+      print("Too Many Degrees Dont Break the Car")
+      self.update_angle(self.angle-angle)
+      return
+    
+  #For comments on code below this, see irMotor above
+  #Pins are changed from the irMotor - see diagrams
+  stepAngle = 360/4096*8;
+  actualTicks = abs(angle)/stepAngle
+  if angle >= 0:
+      self.pinOnOff([9, 25])
+      time.sleep(0.01)
+      self.pinOnOff([9, 11])
+      time.sleep(0.01)
+      self.pinOnOff([25, 8])
+      time.sleep(0.01)
+      self.pinOnOff([9, 11])
+      time.sleep(0.01)
+      actualTicks = actualTicks - 1
+      while actualTicks>0:
+          self.pinOnOff([8, 25])
+          time.sleep(0.01)
+          self.pinOnOff([9, 11])
+          time.sleep(0.01)
+          self.pinOnOff([8, 25])
+          time.sleep(0.01)
+          self.pinOnOff([9, 11])
+          time.sleep(0.01)
+          actualTicks = actualTicks - 1
+  if angle < 0:
+      self.pinOnOff([9, 8])
+      time.sleep(0.01)
+      self.pinOnOff([9, 11])
+      time.sleep(0.01)
+      self.pinOnOff([25, 8])
+      time.sleep(0.01)
+      self.pinOnOff([9, 11])
+      time.sleep(0.01)       
+      actualTicks = actualTicks - 1
+      while actualTicks>0:
+          self.pinOnOff([25, 8])
+          time.sleep(0.01)
+          self.pinOnOff([9, 11])
+          time.sleep(0.01)
+          self.pinOnOff([25, 8])
+          time.sleep(0.01)
+          self.pinOnOff([9, 11])
+          time.sleep(0.01)         
+          actualTicks = actualTicks - 1
+   
+  #This block turns all pins off to make sure none are left on - could screw with stepper motor
+  for i in [9, 25, 11, 8]:
+    if self.pinStates[i] == 1:
+      self.pinOnOff([i])
+
+
+'''
+  #This cluster of Code is for the (Back Wheel) to turn
+  DriveMotor:
+    input # of steps, direction
+    detail: drive the back motor by number of steps
+    #This is really only used for DriveMotorCM
+    #Note, this calls the Labjack we used for this project. For future iterations, this should be converted to raspberry pi code. 
+
+  DriveMotorCM:
+    input cm: distance in cm; direction
+    detail: drive the car certain cm either forward or backward
+    ***updates the distance to the destination 
+'''
+
+#This code will either set a Labjack FIO port high (1) or (0)
+#Channel 5 corresponds to the direction pin on the DRV8825
+#Channel 4 corresponds to the step pin on the DRV8825
+def setFIODrive(self, channel, state): 
+  self.labjack.setDOState(channel, state)
+
+def DriveMotor(self, Steps = 0, Direction = "Forward"): 
+  if Direction == "Forward":
+      self.setFIODrive(5, 1)
+  if Direction == "Backward":
+      self.setFIODrive(5,0)
+  for i in range(Steps):
+      self.setFIODrive(4,1)
+      time.sleep(0.05)
+      self.setFIODrive(4, 0)
+      time.sleep(0.05)
+      
+  #Turns everything off as a default
+  self.setFIODrive(4,0)
+  self.setFIODrive(5,0)
+
+def DriveMotorCM(self, cm = 0, Direction = "Forward", boolean = True):
+  #This relationship was found by experiment since it is affected by friction
+  steps = int(6*cm)
+  self.DriveMotor(steps, Direction)
+  
+  #Finds how far the car has moved relative to the destination
+  xmovement =  np.cos(self.heading*np.pi/180)*cm
+  ymovement = np.sin(self.heading*np.pi/180)*cm
+  
+  #This block changes the destination due to the movement of the car
+  if boolean:
+    self.update_destination(self.destination[0]-xmovement, self.destination[1] - ymovement)
+    
+  #Print for debugging
+  print("destination is", self.destination)       
+  
+  #Returns the actual distance the car has travelled
+  actualtravel = steps/6
+  return actualtravel
+
+
+'''
+  TurnInPlace: (Turning)
+    input: the (angle) of turning, measured in the standard way for this project.
+    detail: Performs a two part turn, going forwards then backwards, leaving the car in the same position it iniated heading towards the input angle. 
+    Updates the heading:
+            ***this has an error of -2.5 ~ 0, always might be slightly less
+'''
+
+def TurnInPlace(self, angle=0,  boolean = False):
+  #If the angle is less than 3, it causes problems
+  if abs(angle) <= 3:
+    return 0
+  
+  #converts the angle to radians and finds distance
+  distance = ((angle/2)*np.pi/180)*45
+  
+  #print for debugging
+  print(distance)
+  
+  #Turns the car one direction
+  self.TurnMotor(65*angle/abs(angle))
+  
+  #Finds the actual distance travelled
+  actualtravel = self.DriveMotorCM(abs(distance), "Forward", boolean)
+  actualangle=((actualtravel/45)*2)*180/np.pi
+  
+  #Updates state variable
+  self.heading += actualangle
+  
+  #Turns wheels the other way
+  self.TurnMotor(130*-1*angle/abs(angle))
+  
+  #printing for debugging
+  print("heading toward", self.heading)
+  
+  #Backs up
+  self.DriveMotorCM(abs(distance), "Backward", boolean)
+  
+  #Turns wheels back to straight
+  self.TurnMotor(65*angle/abs(angle))
+  
+  #Returns the actual angle turned
+  return actualangle
         
   
   """
   @3: Pathfinding Towards the Destination
-      Check Pathfinding_and_Scanning_Detailed.py for more details
   """
   
-  '''
-    HeadingtoDest:
-      detail: This provides how much do we need to turn to destination wrt our front
-  '''
-  def HeadingtoDest(self):
-    if self.destination[0] == 0:
-        turnangle = -self.heading
-        return turnangle
-    else:
-        tantheta = self.destination[1]/self.destination[0];
-        theta = np.arctan(tantheta) * 180/np.pi ###here is minus because positive value of arctan is to the left of the +x-axis, so now, we make it negative, so it is represented in our sense
-        turnangle = theta - self.heading ### here the minus sign represents we are finding the distance from dest to where we are right now
-        return turnangle
-  
-  
-  '''
-    TurnToDest:
-      detail: Turn the robot to the destination and updates the heading
-  '''
-  def TurnToDest(self):
-    turnangle = self.HeadingtoDest()
-    print(turnangle)
-    if abs(turnangle) < 3:
-        return
-    self.TurnInPlace(turnangle) ###TurnInPlace updates the head angle       
-  
-  '''
-  irToDest:
-      Turns the IR sensor towards the destination
-      Updates the ir angle
-  '''
-  def irToDest(self):
-    headangle = self.HeadingtoDest()
-    self.TurntoAngle(headangle)
+ '''
+  HeadingtoDest:
+    detail: This returns the angle that the destination is at, calculated similar to the heading
+'''
+def HeadingtoDest(self):
+  #If the car lies on the x axis, the heading is the angle needed to point to the destination
+  if self.destination[0] == 0:
+      turnangle = -self.heading
+      return turnangle
     
+  #If the heading is not on the x axis, we find the angle and return it
+  else:
+      tantheta = self.destination[1]/self.destination[0];
+      theta = np.arctan(tantheta) * 180/np.pi 
+      turnangle = theta - self.heading 
+      return turnangle
 
+
+'''
+  TurnToDest:
+    detail: Turn the robot to the destination and updates the heading
+'''
+def TurnToDest(self):
+  #Uses HeadingtoDest to find the destination
+  turnangle = self.HeadingtoDest()
+  
+  #Print for debugging
+  print(turnangle)
+  
+  #Angle<3 is too small for the car to perform reliably
+  if abs(turnangle) < 3:
+      return
+    
+  #Turns the car in place (TurnInPlace updates the angle)
+  self.TurnInPlace(turnangle)  
+
+'''
+irToDest:
+    Turns the IR sensor towards the destination
+    Updates the ir angle
+'''
+def irToDest(self):
+  #Uses HeadingtoDest to find destination
+  headangle = self.HeadingtoDest()
+  
+  #Points the IR sensor at destination
+  self.TurntoAngle(headangle)
+    
   """
   @4: Reset
-      Check Pathfinding_and_Scanning_Detailed.py for more details
   """
 
   '''
-    UhOh:
-      detail: turn all the pins off
-  '''
-  def UhOh(self):   
-    for i in range(28):
-      if self.pinStates[i] == 1:
-        self.pinOnOff(i)
-        
-  '''
-    reset:
-      detail: stop all motors,
-              move the front wheel back to original position
-  '''      
-  def reset(self):
-      self.UhOh()
-      self.TurnMotor(-self.angle)
+  UhOh:
+    detail: turn all the pins off
+'''
+def UhOh(self):   
+  for i in range(28):
+    #checks to see if pin is on, and if so, it turns it off
+    if self.pinStates[i] == 1:
+      self.pinOnOff(i)
+
+'''
+  reset:
+    detail: stop all motors,
+            move the front wheel back to original position
+'''      
+def reset(self):
+    #Includes UhOh (pins turn off)
+    self.UhOh()
+    self.TurnMotor(-self.angle)
       
   """
   @5: scanning
-      Check Pathfinding_and_Scanning_Detailed.py for more details
   """
   
-  def getAIN(self, n=0): #again, this is labjact specific code
-      ain0bits, = self.labjack.getFeedback(u3.AIN(n))
-      ainValue = self.labjack.binaryToCalibratedAnalogVoltage(ain0bits, isLowVoltage=False, channelNumber = 0)
-      return ainValue
-  
-  '''
-    VoltagetoDistance
-      input: n = 0 --> the front IR sensor
-             n = 1 --> the scanning IR sensor
-      detail: this function let us know the distance in CM detected by either sensor
-              if either the voltage getting in is too small or the distance is greater than 50cm then return 100 stand for invalid.
-              We included these due to the physical limitations of our IR sensors. Also, the function comes from our experimental fits, 
-              it may vary depending on type of IR sensor. 
-  '''
-  def VoltagetoDistance(self, n=0):
-      Voltage = self.getAIN(n)
-      if Voltage <=0.46:
-          return 100, Voltage
-      x = np.log((Voltage-0.46)/3.67)/(-0.068)
-      if x>50:
-          x = 100
-      return x, Voltage        
-  
-          
-  '''
-    #This cluster of code provides the scanning funcationality of our car:
-    mode:
-      input: an array of value and the tolerance for error
-      output: the value that has the most occurence within the error
-    IRValMode:
-      input: which (AIN) are we trying to detect; how many data (slp) do we want to take; error of tolerance
-      output: average of all the value within error
-      detail: scan and sleep 0.01s for slp times
-              find the mode
-              return the average of all within the mode
-    ScopeScan:
-      return an array of scan
-      detail: slicing the entire front space of 180 degree to 18 pieces centered on an angle (towards), which is the direction relative the heading
-              scan each piece and determine the distance to the obstacles,
-              return all the distance in an array
-      ****subfunction Mode and IRValMode
-        since the IR sensor is very susceptible to small voltage changes, 
-        this code uses the (mode) to sort out the most abundant ones, 
-        then average over all the voltage, 
-        then convert the average voltage to distance
-        this works good enough for it always returns the real distance +/- 2.5cm
-  '''        
-      
-  def mode(self, array, error=0):
-    counter = 0
-    maxv = -100
-    maxI = -1
-    for i in range(len(array)):
-      counter = 0
-      for j in range(len(array)):
-        if j!=i and abs(array[i] - array[j])<=error:
-          counter = counter + 1
-        if maxv < counter:
-          maxv = counter
-          maxI = i
-    return array[maxI]
-  
-  def IRValMode(self, ain = 0, slp = 30, error = 0.04):
-    temp = 0
-    tempArray = np.zeros(slp)
-    tempsum = 0
-    data = 0
-    counter = 0
-    for j in range(slp):
-      time.sleep(0.01)
-      temp, tempArray[j] = self.VoltagetoDistance(ain)
-    data = self.mode(tempArray, error)
-    for j in range(slp):
-      if abs(data-tempArray[j]) <=error:
-        tempsum = tempsum + tempArray[j]
-        counter = counter + 1
-    data = tempsum/counter
-    if data < 0.46:
-      return 100
-    data = np.log((data-0.46)/3.67)/(-0.068)  
-    if data > 50:
-      data = 100
-    return data
+  def getAIN(self, n=0):
+    #Grabs the value of the analog input DAC(n) on the Labjack
+    ain0bits, = self.labjack.getFeedback(u3.AIN(n))
+    
+    #Converts value above into a Voltage 0-5V and returns
+    ainValue = self.labjack.binaryToCalibratedAnalogVoltage(ain0bits, isLowVoltage=False, channelNumber = 0)
+    return ainValue
 
-  def ScopeScan(self, towards = 0):
-    num_steps = 180//self.scanslice
-    ir_data = np.zeros(num_steps)
-    ir_vol = np.zeros(num_steps)
-    self.TurntoAngle(towards + 90)
-    for i in range(num_steps):
-        ir_data[i] = self.IRValMode(1)
-        self.irMotor(-self.scanslice)
-    self.TurntoAngle(0)
-    print(ir_data)
-    return ir_data         
+'''
+  VoltagetoDistance
+    input: n = 0 --> the front IR sensor
+           n = 1 --> the scanning IR sensor
+    detail: this function let us know the distance in CM detected by either sensor
+            if either the voltage getting in is too small or the distance is greater than 50cm then return 100 stand for invalid.
+            We included these due to the physical limitations of our IR sensors. Also, the function comes from our experimental fits, 
+            it may vary depending on type of IR sensor. 
+'''
+def VoltagetoDistance(self, n=0):
+    #calls getAIN to find voltage
+    Voltage = self.getAIN(n)
+    
+    #By calibration, this was found to be the voltage that the IR sensors were unreliable at, so we return a maximum value 100
+    if Voltage <=0.46:
+        return 100, Voltage
+      
+    #If the voltage is in our usable range, we use the function found from experiment to find the distance
+    x = np.log((Voltage-0.46)/3.67)/(-0.068)
+    
+    #Since we don't need to find distances greater than 50cm, we convert them all to 100
+    if x>50:
+        x = 100
+        
+    #Returns distance and voltage
+    return x, Voltage        
+
+
+'''
+  #This cluster of code provides the scanning funcationality of our car:
+  mode:
+    input: an array of value and the tolerance for error
+    output: the value that has the most occurence within the error
+  IRValMode:
+    input: which (AIN) are we trying to detect; how many data (slp) do we want to take; error of tolerance
+    output: average of all the value within error
+    detail: scan and sleep 0.01s for slp times
+            find the mode
+            return the average of all within the mode
+  ScopeScan:
+    return an array of scan
+    detail: slicing the entire front space of 180 degree to 18 pieces centered on an angle (towards), which is the direction relative the heading
+            scan each piece and determine the distance to the obstacles,
+            return all the distance in an array
+    ****subfunction Mode and IRValMode
+      since the IR sensor is very susceptible to small voltage changes, 
+      this code uses the (mode) to sort out the most abundant ones, 
+      then average over all the voltage, 
+      then convert the average voltage to distance
+      this works good enough for it always returns the real distance +/- 2.5cm
+'''        
+
+def mode(self, array, error=0):
+  counter = 0
+  maxv = -100
+  maxI = -1
+  
+  #Iterates over each value in the array
+  for i in range(len(array)):
+    counter = 0
+    
+    #Iterates over each value again
+    for j in range(len(array)):
+      
+      #Skips the iteration if it's the same value, and checks to see if the difference is within the defined error
+      if j!=i and abs(array[i] - array[j])<=error:
+        
+        #If it is, add a count
+        counter = counter + 1
+      
+      #Checks to see it this is the most frequently within error of all values checked in first iteration so far
+      if maxv < counter:
+        
+        #If it is, set this one to the mode
+        maxv = counter
+        maxI = i
+        
+  #Returns the final mode
+  return array[maxI]
+
+def IRValMode(self, ain = 0, slp = 30, error = 0.04):
+  temp = 0
+  tempArray = np.zeros(slp)
+  tempsum = 0
+  data = 0
+  counter = 0
+  
+  #Takes a certain number of measurements (slp)
+  for j in range(slp):
+    time.sleep(0.01)
+    
+    #Finds a distance for each measurement
+    temp, tempArray[j] = self.VoltagetoDistance(ain)
+  
+  #Finds the mode of the measured distances
+  data = self.mode(tempArray, error)
+  
+  #Iterates over every measurement
+  for j in range(slp):
+    
+    #Sums each value that is close enough to the mode
+    if abs(data-tempArray[j]) <=error:
+      tempsum = tempsum + tempArray[j]
+      counter = counter + 1
+  
+  #Finds the mean of the close values
+  data = tempsum/counter
+  
+  #Same returns as VoltagetoDistance
+  if data < 0.46:
+    return 100
+  data = np.log((data-0.46)/3.67)/(-0.068)  
+  if data > 50:
+    data = 100
+  return data
+
+def ScopeScan(self, towards = 0):
+  #Finds the number of scans to take
+  num_steps = 180//self.scanslice
+  
+  ir_data = np.zeros(num_steps)
+  ir_vol = np.zeros(num_steps)
+  
+  #Points IR sensor 90 degrees to left of the wanted angle
+  self.TurntoAngle(towards + 90)
+  
+  #Makes an array of num_steps values using the mode to accoutn for errors
+  for i in range(num_steps):
+      ir_data[i] = self.IRValMode(1)
+      self.irMotor(-self.scanslice)
+      
+  #Finished back at center
+  self.TurntoAngle(0)
+  
+  #Returns/prints distances
+  print(ir_data)
+  return ir_data             
   
   """
   @6: Logic and loops
-      Check Logic_Detailed.py for more details
   """
 
   '''
@@ -483,9 +630,6 @@ class piRobot():
             minI = i + 1
     return -(minI * 10 - 90)
 
-
-  
-
   def FindMinimumAngle(self, towards = 0, tolerance = 100):
     ir_data = self.ScopeScan(towards) 
     middle_index = len(ir_data) // 2
@@ -498,7 +642,7 @@ class piRobot():
             return -10 * i + towards
     return self.escape_loop(self)
     
-  '''
+   '''
     sensor_loop:
       the main loop that will run the car to the destination set by destination(x,y)
       !!!!always should end here
@@ -512,23 +656,24 @@ class piRobot():
 
   def sensor_loop(self):
     print("sensor_loop")
-    front_min = self.sensorloopTolerance;
+    front_min = self.sensorloopTolerance; # cm Minimum values telling the car when to stop ### always trying to move in a straight line to the destination
     temp = 0
-    while self.WALK():
-        front_dist, temp = self.VoltagetoDistance(0)
+    while self.WALK(): ###true when the car is not within 5cm radius of the end point
+        front_dist, temp = self.VoltagetoDistance(0) #scan the front 
         print(front_dist)
-        if front_dist >= front_min or self.Reachable(front_dist): 
-          self.DriveMotorCM(1, "Forward")
-          print("vroom vroom")
-          time.sleep(0.05)
-        else:
+        if front_dist >= front_min or self.Reachable(front_dist): ###if we still have space drive forward or if the destination is close enough
+          self.DriveMotorCM(1, "Forward") ###Drive forward 1cm
+          print("vroom vroom") ###I think this is a funny way to tell us what it is doing, helpful for debugging.
+          time.sleep(0.05) ###This sleeps the code to give the motor time to do its thing
+        else: ###check again to make sure it is not the IR sensor giving us trouble
           front_dist = self.IRValMode(0)
-          if front_dist >= front_min or self.Reachable(front_dist):
-            self.DriveMotorCM(1, "Forward") 
+          if front_dist >= front_min or self.Reachable(front_dist): ###if it is just the sensor is giving us trouble, then still marching forward
+            self.DriveMotorCM(1, "Forward") ###Drive forward 1cm
             print("vroom vroom") 
             time.sleep(0.05)  
-          else:
-            return self.avoid_loop(front_dist);
+          else: #front sensor isnt happy anymore. Passes to next layer of decision making.
+            return self.avoid_loop(front_dist)
+    #As exiting the while loop, we already reached our destination;
     print("Destination has been reached");
   '''
     avoid_loop:
@@ -546,37 +691,40 @@ class piRobot():
  
   def avoid_loop(self, dist):
     print("avoid_loop") #debugging
-    angle = (self.FindMinimumAngle(self.HeadingtoDest())) + self.HeadingtoDest();
+    angle = (self.FindMinimumAngle(self.HeadingtoDest())) + self.HeadingtoDest(); #This tells the angle of the turn, measured from centerline. Negative values correspond to left turns
     i = 0
-    front_min = 20 
+    front_min = 20 #in this loop since we only need to avoid the obstacle, so we only need to make sure we can have enough space to turn in place
     temp = 0
     print(f"Turning to angle {angle} degrees...")
+    #These just turn the car to point away from the obstacle additional 20 degree to ofset some of the unceratainties, need fruther adjustment to make it more percsie
     if angle > 0: 
       self.TurnInPlace(abs(angle) + 20)
     elif angle < 0:
       self.TurnInPlace(angle - 20)
-    while i*np.cos(angle/180*np.pi) < dist + 20: 
-      front_dist, temp = self.VoltagetoDistance(0)
-      if front_dist >= front_min: 
+    while i*np.cos(angle/180*np.pi) < dist + 20: #Drive the car far enough to pass the distance to the obstacle
+      front_dist, temp = self.VoltagetoDistance(0) #Keep scanning as it drives towards the obstacle
+      if front_dist >= front_min: #If no obstacles, keep going
         self.DriveMotorCM(1, "Forward")
         i += 1
-      else:
+      else: #If there is obstacle, first ceck again 
         front_dist = self.IRValMode(0)
         if front_dist >= front_min:
           self.DriveMotorCM(1, "Forward")
           i += 1
-        else: 
+        else: #If for sure bad, try another avoid loop with the full scan
           return self.avoid_loop(front_dist)
-    angle = self.FindMinimumAngle(self.HeadingtoDest()) + self.HeadingtoDest();  
-    if angle < -1000:
+    #As exiting the while loop, we are already side to side with the obstacle
+    angle = self.FindMinimumAngle(self.HeadingtoDest()) + self.HeadingtoDest(); #find the smallest angle that we can turn to deviated from the destination    
+    if angle < -1000: #if there is not escape, then we just turn to escape loop
         self.reset();
         return self.escape_loop();
-    self.TurnInPlace(angle)
-    If abs(self.heading - self.HeadingtoDest())<=3: 
+    self.TurnInPlace(angle) #if there is a place to turn to we turn to that angle
+    If abs(self.heading - self.HeadingtoDest())<=3: #if we finaly go back to the origianl angle, just go back to drive straight, which means we already avoided the intened obstacle;
         self.reset();
         return self.sensor_loop();
     front_dist = self.IRValMode(0);
-    return self.avoid_loop(50); 
+    return self.avoid_loop(50); #if we are not facing the destination, then we try to use the avoid loop to turn back to our original destination
+
 '''
     escape_loop:
     Called when a scope scan returns no acceptable values, meaning that car is surrounded on all sides. 
@@ -590,29 +738,28 @@ class piRobot():
 '''
 
   def escape_loop(self):
-    self.TurntoAngle(-90) 
-    side_dist = self.VoltagetoDistance(1)
+    self.TurntoAngle(-90) #Turn the IR sensor towards the left to look for an exit
+    side_dist = self.VoltagetoDistance(1) #This returns the dsitance 90 degrees towards the left
     i = 0;
-    while i <= 30:
+    while i <= 30: #Reverse until there is a clear path of width 30cm to the left
         side_dist, temp = self.VoltagetoDistance(1)
         self.DriveMotorCM(1, "Backwards")
         if side_dist <100:
             i = 0;
         else:
             i = i + 1;
-    self.TurnInPlace(-90) 
-    self.reset()
-    self.DriveMotorCM(70);
-    front_dist = self.IRValMode(0); 
-    return self.avoid_loop(front_dist); 
-  
+    self.TurnInPlace(-90) #Turn the car towards the opening
+    self.reset() #Return all the motor towards the center
+    self.DriveMotorCM(70); #Drive Towards the opening for 70cm, then trying to see if we can head back;
+    front_dist = self.IRValMode(0); #how much the nearest barrier to our car.
+    return self.avoid_loop(front_dist); #if there is barrier, then we try to avoid that, if there is no barrier, then we just try to return to the destination
+          
 '''
 Below code can be uncommented when the car is meant to run
+The arguments of the DriveToDest call is where you want the car to travel to (the destination)
 
 p = piRobot()
-p.update_destination(200, 0):
-p.sensor_loop();
-
+p.DriveToDest([200,0])
 '''
 
 
