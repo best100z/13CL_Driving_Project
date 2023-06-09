@@ -66,6 +66,7 @@ class piRobot():
   
   """
   @2: Turning Motors
+      Check Turning_and_Driving_Detailed.py for more detailed comments
   """
   
   '''
@@ -264,6 +265,7 @@ class piRobot():
   
   """
   @3: Pathfinding Towards the Destination
+      Check Pathfinding_and_Scanning_Detailed.py for more details
   """
   
   '''
@@ -304,6 +306,7 @@ class piRobot():
 
   """
   @4: Reset
+      Check Pathfinding_and_Scanning_Detailed.py for more details
   """
 
   '''
@@ -326,6 +329,7 @@ class piRobot():
       
   """
   @5: scanning
+      Check Pathfinding_and_Scanning_Detailed.py for more details
   """
   
   def getAIN(self, n=0): #again, this is labjact specific code
@@ -426,6 +430,7 @@ class piRobot():
   
   """
   @6: Logic and loops
+      Check Logic_Detailed.py for more details
   """
 
   '''
@@ -440,7 +445,7 @@ class piRobot():
     return yes
   
   '''
-    Reacable:
+    Reachable:
       input: distance theoretically will travel
       output: boolean if within the steps the car will reach within the 5cm radius of the end point
       detail: each time just theoretically move 1 cm forward, and use WALK to check if still need to walk
@@ -525,7 +530,7 @@ class piRobot():
           else: #front sensor isnt happy anymore. Passes to next layer of decision making.
             front_dist = front_dist - 10
             return self.avoid_loop(front_dist)
-  """
+  '''
     avoid_loop:
       Allows the car to navigate around an obstacle. Passed the distance to said obstacle. 
       1. Uses ScopeScan to create an array of its surroundigs, and return the first clear angle closest to the destination.
@@ -535,7 +540,7 @@ class piRobot():
       5. Creates a scan centered on the destination 
       6. Checks again to make sure the direct path is clear --> If clear, passes DriveToDest
       7. Otherwise, will pick the closest clear path, and returns sensor loop to keep car going until it runs into another obstacle. 
-  """        
+  '''        
  
   def avoid_loop(self, dist):
     print("avoid_loop") #debugging
@@ -607,7 +612,7 @@ class piRobot():
     return self.DriveToDest(self.destination)
         
 
-"""
+'''
     DriveToDest:
     Code used to minimize error:
     We start our runs by defining a coordinate system with the car at the origin and the destination on the positive x axis
@@ -619,7 +624,7 @@ class piRobot():
     3. the car measures the distance to the destination
     4. the car updates the destination so that it is now at (distance, 0), resetting the positive x axis
     5. the car resets its heading, then calls sensor loop
-"""
+ '''
   def DriveToDest(self, args):
     x,y = args
     self.update_destination(x,y)
