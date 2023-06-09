@@ -512,24 +512,23 @@ class piRobot():
 
   def sensor_loop(self):
     print("sensor_loop")
-    front_min = self.sensorloopTolerance; # cm Minimum values telling the car when to stop ### always trying to move in a straight line to the destination
+    front_min = self.sensorloopTolerance;
     temp = 0
-    while self.WALK(): ###true when the car is not within 5cm radius of the end point
-        front_dist, temp = self.VoltagetoDistance(0) #scan the front 
+    while self.WALK():
+        front_dist, temp = self.VoltagetoDistance(0)
         print(front_dist)
-        if front_dist >= front_min or self.Reachable(front_dist): ###if we still have space drive forward or if the destination is close enough
-          self.DriveMotorCM(1, "Forward") ###Drive forward 1cm
-          print("vroom vroom") ###I think this is a funny way to tell us what it is doing, helpful for debugging.
-          time.sleep(0.05) ###This sleeps the code to give the motor time to do its thing
-        else: ###check again to make sure it is not the IR sensor giving us trouble
+        if front_dist >= front_min or self.Reachable(front_dist): 
+          self.DriveMotorCM(1, "Forward")
+          print("vroom vroom")
+          time.sleep(0.05)
+        else:
           front_dist = self.IRValMode(0)
-          if front_dist >= front_min or self.Reachable(front_dist): ###if it is just the sensor is giving us trouble, then still marching forward
-            self.DriveMotorCM(1, "Forward") ###Drive forward 1cm
+          if front_dist >= front_min or self.Reachable(front_dist):
+            self.DriveMotorCM(1, "Forward") 
             print("vroom vroom") 
             time.sleep(0.05)  
-          else: #front sensor isnt happy anymore. Passes to next layer of decision making.
-            return self.avoid_loop(front_dist)
-    #As exiting the while loop, we already reached our destination;
+          else:
+            return self.avoid_loop(front_dist);
     print("Destination has been reached");
   '''
     avoid_loop:
@@ -547,40 +546,37 @@ class piRobot():
  
   def avoid_loop(self, dist):
     print("avoid_loop") #debugging
-    angle = (self.FindMinimumAngle(self.HeadingtoDest())) + self.HeadingtoDest(); #This tells the angle of the turn, measured from centerline. Negative values correspond to left turns
+    angle = (self.FindMinimumAngle(self.HeadingtoDest())) + self.HeadingtoDest();
     i = 0
-    front_min = 20 #in this loop since we only need to avoid the obstacle, so we only need to make sure we can have enough space to turn in place
+    front_min = 20 
     temp = 0
     print(f"Turning to angle {angle} degrees...")
-    #These just turn the car to point away from the obstacle additional 20 degree to ofset some of the unceratainties, need fruther adjustment to make it more percsie
     if angle > 0: 
       self.TurnInPlace(abs(angle) + 20)
     elif angle < 0:
       self.TurnInPlace(angle - 20)
-    while i*np.cos(angle/180*np.pi) < dist + 20: #Drive the car far enough to pass the distance to the obstacle
-      front_dist, temp = self.VoltagetoDistance(0) #Keep scanning as it drives towards the obstacle
-      if front_dist >= front_min: #If no obstacles, keep going
+    while i*np.cos(angle/180*np.pi) < dist + 20: 
+      front_dist, temp = self.VoltagetoDistance(0)
+      if front_dist >= front_min: 
         self.DriveMotorCM(1, "Forward")
         i += 1
-      else: #If there is obstacle, first ceck again 
+      else:
         front_dist = self.IRValMode(0)
         if front_dist >= front_min:
           self.DriveMotorCM(1, "Forward")
           i += 1
-        else: #If for sure bad, try another avoid loop with the full scan
+        else: 
           return self.avoid_loop(front_dist)
-    #As exiting the while loop, we are already side to side with the obstacle
-    angle = self.FindMinimumAngle(self.HeadingtoDest()) + self.HeadingtoDest(); #find the smallest angle that we can turn to deviated from the destination    
-    if angle < -1000: #if there is not escape, then we just turn to escape loop
+    angle = self.FindMinimumAngle(self.HeadingtoDest()) + self.HeadingtoDest();  
+    if angle < -1000:
         self.reset();
         return self.escape_loop();
-    self.TurnInPlace(angle) #if there is a place to turn to we turn to that angle
-    If abs(self.heading - self.HeadingtoDest())<=3: #if we finaly go back to the origianl angle, just go back to drive straight, which means we already avoided the intened obstacle;
+    self.TurnInPlace(angle)
+    If abs(self.heading - self.HeadingtoDest())<=3: 
         self.reset();
         return self.sensor_loop();
     front_dist = self.IRValMode(0);
-    return self.avoid_loop(50); #if we are not facing the destination, then we try to use the avoid loop to turn back to our original destination
-
+    return self.avoid_loop(50); 
 '''
     escape_loop:
     Called when a scope scan returns no acceptable values, meaning that car is surrounded on all sides. 
@@ -594,22 +590,22 @@ class piRobot():
 '''
 
   def escape_loop(self):
-    self.TurntoAngle(-90) #Turn the IR sensor towards the left to look for an exit
-    side_dist = self.VoltagetoDistance(1) #This returns the dsitance 90 degrees towards the left
+    self.TurntoAngle(-90) 
+    side_dist = self.VoltagetoDistance(1)
     i = 0;
-    while i <= 30: #Reverse until there is a clear path of width 30cm to the left
+    while i <= 30:
         side_dist, temp = self.VoltagetoDistance(1)
         self.DriveMotorCM(1, "Backwards")
         if side_dist <100:
             i = 0;
         else:
             i = i + 1;
-    self.TurnInPlace(-90) #Turn the car towards the opening
-    self.reset() #Return all the motor towards the center
-    self.DriveMotorCM(70); #Drive Towards the opening for 70cm, then trying to see if we can head back;
-    front_dist = self.IRValMode(0); #how much the nearest barrier to our car.
-    return self.avoid_loop(front_dist); #if there is barrier, then we try to avoid that, if there is no barrier, then we just try to return to the destination
-          
+    self.TurnInPlace(-90) 
+    self.reset()
+    self.DriveMotorCM(70);
+    front_dist = self.IRValMode(0); 
+    return self.avoid_loop(front_dist); 
+  
 '''
 Below code can be uncommented when the car is meant to run
 
