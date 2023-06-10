@@ -3,6 +3,8 @@ The main goal of this project was to build a small scale self-driving car. This 
 
 So, why a self driving car? As evidenced by the popularity of Tesla, a car that can drive itself is a huge draw for consumers. Not only that, but it also has many possible applications in small scale robotics. However, we decided to focus more on the human aspect of this technology. Our car has a steering column that allows it to drive like an actual car on the road. We really wanted to see how far our car can get on a small scale without the aid of complicated devices like GPS and the other sensors Teslas use. Although our car is still a work in progress, with more testing we believe that it can overcome a large variety of obstacles it may encounter. 
 
+For videos of the car in action, check the videos folder in this repository.
+
 ## Table of Contents
 1. [Building the Car](#build)
 2. [Electronic Components](#components)
