@@ -96,7 +96,11 @@ sudo python /home/pi/sample.py
 ```
 You will need to edit this line in order to fit your specific naming conventions. /home/pi/sample.py will be replaced by the path of your specific python program. For our case, it was /home/robotgrouppi/13CL_Driving_Project/Final\ Run\ Code\ Version.py. Once you've got this set up, you should see the Pi running your program in a terminal window whenever you plug it in!
 
-The Raspberry Pi's GPIO pins will need to be used in order to provide stepping instructions to the smaller stepper motors. The code for doing this is included in "Final Run Code Version.py" 
+The Raspberry Pi's GPIO pins will need to be used in order to provide stepping instructions to the smaller stepper motors. The code for doing this is included in "Final Run Code Version.py" in lines 16-29 and 76-89. These codes corrspond to the specific pinouts that we chose for our Raspberry Pi, shown below.
+
+<img src="Diagrams_and_Images/Raspberry Pi Pinout.png" width=900>
+
+Any of the numbered GPIO pins, despite their secondary function, can be used for the purposes needed for this project. While the Raspberry Pi is very capable of controlling the logic pins on the smaller stepper motors, we also need a Labjack for some other purposes. 
 <a name="labjack"></a>
 ## Labjack
 While this project does not require a Labjack, we used one for its analog voltage readings and as a source of 5V DC current to power the smaller stepper motors. Here is the pinout that we used and our code is designed for. However, you can do this in any way you like:
