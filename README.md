@@ -1,6 +1,6 @@
 # Project Description
 The main goal of this project was to build a small scale self-driving car. This car would have several key capabilities. First, we wanted it to be able to drive to a specific set destination. Second, we needed the car to be able to avoid obstacles along the way to this destination. We expected the car to be able to perform all tasks on board. That is, as soon as it was plugged in/turned on, it would travel to its destination without any user input. To do this, we built the car, created a steering column and drive motor, and added several electronic components to perform the needed tasks. This README serves as an introduction into working with the car and as a guide to recreating the project.
-So, why a self driving car? As evidenced by the popularity of Tesla, a car that can drive itself is a huge draw for consumers. Not only that, but it also has many possible applications in small scale robotics. However, we decided to focus more on the human aspect of this technology. Our car has a steering column that allows it to drive like an actual car on the road. Although our car is still a work in progress, with more testing we believe that it can overcome a large variety of obstacles it may encounter. We believe that the greatest advantage for our car is its destination tracking capabilities. Small scale distance measurement is a complicated field of active research which will be detailed in section 4, along with our solution.
+So, why a self driving car? As evidenced by the popularity of Tesla, a car that can drive itself is a huge draw for consumers. Not only that, but it also has many possible applications in small scale robotics. However, we decided to focus more on the human aspect of this technology. Our car has a steering column that allows it to drive like an actual car on the road. We really wanted to see how far our car can get on a small scale without the aid of complicated devices like GPS and the other sensors Teslas use. Although our car is still a work in progress, with more testing we believe that it can overcome a large variety of obstacles it may encounter. 
 
 ## Table of Contents
 1. [Building the Car](#build)
@@ -119,6 +119,27 @@ While this project does not require a Labjack, we used one for its analog voltag
 
 <a name="challenges"></a>
 # Real World Challenges
+For this project, the main challenge was that it takes place in the real world. If we lived in an idealized world with perfect no slip conditions and no friction when we don't want there to be friction, everything would be easy. That is obviously not the case. We ran into several key issues when experimenting with our car that needed to be solved. These solutions ranged from coding fixes to rubber bands. as we will detail in this section.
+
+## IR Sensors
+We ran into an issue with our scanners where they would often record data incorrectly. We believe this is due to how small voltage changes lead to large distance changes in the range of 40 to 50cm.
+<img src="Diagrams_and_Images/IR Error.png" width=600>
+
+Unfortunately, most of the time, that is the distance we are looking for obstacles in. We need about 40cm for the car to have enough space to turn. These small voltage fluctuations would lead to the car often seeing things that were not actually there. This was extremely problematic, as when the avoid loop starts the scope often won't pick anything up, leading to the car venturing off course. We solved this problem by having the car first stop and scan again. This is a more intensive scan, as it takes 30 readings. From there it finds the mode of the data. Then it takes all of the readings within 0.04cm of the mode and averages them. This is the distance that the sensor returns from this scan. This greatly improved the consistency of navigation, but highlights some of the problems with the IR sensors. 
+
+## Motor Mounting
+We consistently struggled with mounting the NEMA 14 Stepper motor, which resulted in the stepper motor often “skipping” over the LEGO piece. As all of our pathfinding is internal, this would lead to the car thinking it traveled further than it had. We used a short term solution for the duration of this project. We were able to mount the motor securely using a combination of LEGO pieces and rubber bands, as shown.
+<img src="Diagrams_and_Images/Rubber Bands.png" width=300>
+
+
+However, when we had all of the electronics onboard the motor would still skip. Our short term solution to this is just to carry the electronics alongside the car. Of course, neither of these solutions are ideal, and now that the design of the car is finalized our immediate next step would be to 3D print a better chassis and motor mount and fully onboard all of the technology. 
+
+## Friction
+One major issue we had was the friction of the car while it turned. Because there is more friction when the front wheels are turned than when they are not, the distance the car travels per step changes. This made it extremely hard to consider how the location is changing as the car is turning, as all of our location data was onboarded and dependent on a discrete correlation between steps and centimeters. Anything that adjusts this relationship, such as turning, introduced mistakes in getting to the final destination. Our solution for this was to have the car undergo a two point turn, traveling half the desired turn angle forwards, then the rest backwards. This maneuver would leave the car in the exact place it started, facing the desired angle. After doing this, it will start updating distance data using simple trigonometry to describe how the car moves relative to the destination. 
+
+## Heading and Destination
+As we were unable to create an external way to tell the car where it is, like a wireless beacon, due to time constraints, we had to handle geographic positioning through a discreet relationship between steps and centimeters. Every time we drive the car, always in 1cm steps, the car considers its heading relative to the positive x axis which is measured from the origin facing the obstacle. Positive angles always correspond to left turns. The car considers this heading as it drives to calculate where it is relative to the grid through trigonometry. This allows it to always know where it is, as well as the angle and distance to the destination. One technique we developed to reduce the chances for mistakes was to redefine the coordinate system every time the robot had a straight shot at the destination. Essentially, after every avoid loop, the car looks directly at the destination. If this path is clear, the car will turn to face it, and then update the coordinate system so that the destination is again on the positive x axis measured from the car. The car calculates the distance this point is from the original x and y values. This allows the car to dodge obstacles one at a time, reducing the chances of a breakdown in pathfinding.  
+
 
 <a name="code"></a>
 # Pathfinding Code
