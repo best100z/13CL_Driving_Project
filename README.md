@@ -78,9 +78,25 @@ The error bars on this plot are $1-\sigma$ error bars for the 30 data points at 
 ## Raspberry Pi
 The Raspberry Pi is the brains of the car in this project. It contains all of the code and will perform all of the actions required of the car once turned on. However, along with the code, there is some setup required. First of all, the Pi needs to run the code on startup. The way we do this is by changing the bash file to run the code whenever a terminal is opened, and we add a line of code that opens a terminal window whenever the Pi is turned on. The reason that we do this instead of just running the code on startup is for debugging purposes. If the UI of the Pi is connected to a monitor in some way, you can view what the Pi is doing through the opened terminal window while it runs. The Raspberry Pi will also need some Python packages that are not included in most versions of Anaconda. However, the Python environment that comes installed on Raspbian OS (which we highly recommend as the OS) contains theses packages. For any other Raspberry Pi OS, you may need different instructions. 
 
-I will detail here the instructions on how to get the Pi to run code on startup. First, navigate to a terminal window. The native terminal program on Raspbian OS works fine.
+I will detail here the instructions on how to get the Pi to run code on startup. First, navigate to a terminal window. The native terminal program on Raspbian OS works fine. Type the following command:
+```console
+sudo nano ~/.config/lxsession/LXDE-pi/autostart
+```
+This will open a text file that you can edit. At the bottom of this file, add the line:
+```console
+@lxterminal
+```
+This will make the terminal window open on startup. Close, save, and reboot the Pi. You should see a terminal window open on startup. Once this is done, you will need to edit the .bashrc file in order to make the Pi run code on startup. Do this by running:
+```console
+sudo nano /home/pi/.bashrc
+```
+And then adding the line:
+```console
+sudo python /home/pi/sample.py
+```
+You will need to edit this line in order to fit your specific naming conventions. /home/pi/sample.py will be replaced by the path of your specific python program. For our case, it was /home/robotgrouppi/13CL_Driving_Project/Final\ Run\ Code\ Version.py. Once you've got this set up, you should see the Pi running your program in a terminal window whenever you plug it in!
 
-Secondly, the Raspberry Pi's GPIO pins will need to be used in order to provide stepping instructions to the smaller stepper motors. This is detialed thoroughly 
+The Raspberry Pi's GPIO pins will need to be used in order to provide stepping instructions to the smaller stepper motors. The code for doing this is included in "Final Run Code Version.py" 
 <a name="labjack"></a>
 ## Labjack
 While this project does not require a Labjack, we used one for its analog voltage readings and as a source of 5V DC current to power the smaller stepper motors. Here is the pinout that we used and our code is designed for. However, you can do this in any way you like:
