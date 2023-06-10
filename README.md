@@ -72,13 +72,18 @@ The infrared Sensors that we used in this project were Sharp GP2Y0A21YK sensors.
 Once the IR sensors had been chosen, we needed to calibrate them. This was done by measuring the voltage readout of the IR sensor at 5cm increments between 10cm and 80cm. Once this data was obtained, a regression was performed to find a voltage-distance relation. Upon performing fits for both power laws and exponentials, the exponential fit was preferred due to a smaller $\chi^2$. The relationship found was: $V=3.67e^{-0.068d}+0.46$, where V is the voltage and d is the distance. This relationship held under all testing. It worked similarly well for each different IR sensor, so calibration was consistent. Another test was then performed with 30 measurements taken at each distance, with the results shown below. 
 <img src="Diagrams_and_Images/IR Sensor Calibration.png" width=600>
 
+The error bars on this plot are $1-\sigma$ error bars for the 30 data points at each distance. Points correspond to the mean of the data points. The error bars are also multiplied by 100 to showcase how accurate this measurement is. Becuase the calibration not only worked for each different sensor, but also entirely different sets of data, we assume that it is very accurate under these controlled conditions. It is worth noting that all of these tests were performed with a cardboard target, which was the material used for the obstacles in our final tests. This relationship is expected to vary slightly depending on the material that is being detected. 
 
 <a name="rpi"></a>
 ## Raspberry Pi
+The Raspberry Pi is the brains of the car in this project. It contains all of the code and will perform all of the actions required of the car once turned on. However, along with the code, there is some setup required. First of all, the Pi needs to run the code on startup. The way we do this is by changing the bash file to run the code whenever a terminal is opened, and we add a line of code that opens a terminal window whenever the Pi is turned on. The reason that we do this instead of just running the code on startup is for debugging purposes. If the UI of the Pi is connected to a monitor in some way, you can view what the Pi is doing through the opened terminal window while it runs. The Raspberry Pi will also need some Python packages that are not included in most versions of Anaconda. However, the Python environment that comes installed on Raspbian OS (which we highly recommend as the OS) contains theses packages. For any other Raspberry Pi OS, you may need different instructions. 
 
+I will detail here the instructions on how to get the Pi to run code on startup. First, navigate to a terminal window. The native terminal program on Raspbian OS works fine.
+
+Secondly, the Raspberry Pi's GPIO pins will need to be used in order to provide stepping instructions to the smaller stepper motors. This is detialed thoroughly 
 <a name="labjack"></a>
 ## Labjack
-While this project does not require a Labjack, we used one for its analog voltage readings, and as a source of 5V DC current to power the other stepper motors. Here is the pinout that we used and our code is designed for; however, you can do this in any way you like:
+While this project does not require a Labjack, we used one for its analog voltage readings and as a source of 5V DC current to power the smaller stepper motors. Here is the pinout that we used and our code is designed for. However, you can do this in any way you like:
 <img src="Diagrams_and_Images/Labjack Pinout.png" width=400>
 
 * VS – First IR sensor power
